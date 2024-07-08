@@ -54,6 +54,7 @@ public class RelativeFilterQueryComposer {
         else if (vendorName.equals("motherduck")) {
             logger.info("------ inside motherduck block");
             finalQuery = RelativeFilterDateMotherDuck.getRelativeDate(relativeFilter, anchorDateArray);
+        }
         else if (vendorName.equals("db2")) {
             logger.info("------ inside db2 block");
             finalQuery = RelativeFilterDateDB2.getRelativeDate(relativeFilter, anchorDateArray);

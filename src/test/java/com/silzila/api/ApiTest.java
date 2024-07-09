@@ -67,7 +67,8 @@ public class ApiTest {
         String testUrl="http://localhost:8080/api/database-connection-test";
         String createUrl="http://localhost:8080/api/database-connection";
 
-        String dbConnectionInfo="{\"connectionName\": \"Pg1\",\"vendor\": \"postgresql\",\"server\": \"localhost\",\"port\": \"5432\",\"database\": \"postgres\",\"password\": \"postgres\",\"username\": \"postgres\"}";
+
+        String dbConnectionInfo="{\"connectionName\": \"Pg4\",\"vendor\": \"postgresql\",\"server\": \"localhost\",\"port\": \"5432\",\"database\": \"postgres\",\"password\": \"postgres\",\"username\": \"postgres\"}";
 
         ValidatableResponse testDBConnection = RestAssured.given().contentType("application/json").body(dbConnectionInfo).when().post(testUrl).then();
         testDBConnection.statusCode(200);
@@ -78,6 +79,18 @@ public class ApiTest {
 
         String dbId = responseJson.getString("id");
         testGetOneDBConnection(dbId);
+
+        String databaseUrl="http://localhost:8080/api/metadata-databases/{id}";
+        ValidatableResponse metadataDatabase = RestAssured.given().pathParam("id", dbId).when().get(databaseUrl).then();
+        Response metadataDBResponse=metadataDatabase.statusCode(200).extract().response();
+        JSONArray metadataDBJson = new JSONArray(metadataDBResponse.body().asString());
+        Assert.assertTrue(metadataDBJson.toString().contains("postgres"));
+
+        String schemaUrl="http://localhost:8080/api/metadata-schemas/{id}";
+        ValidatableResponse metadataSchema = RestAssured.given().pathParam("id", dbId).when().get(schemaUrl).then();
+        Response metadataSchemaResponse=metadataSchema.statusCode(200).extract().response();
+        JSONArray metadataSchemaJson = new JSONArray(metadataSchemaResponse.body().asString());
+        Assert.assertTrue(metadataSchemaJson.toString().contains("pos"));
     }
 
 }

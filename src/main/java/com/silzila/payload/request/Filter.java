@@ -28,11 +28,11 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public class Filter implements Serializable {
 
     @JsonProperty("filterType")
-    private String filterType;
+    private String filterType = null;
     @JsonProperty("tableId")
     private String tableId;
     @JsonProperty("tableName")
-    private String tableName=null;
+    private String tableName = null;
     @JsonProperty("fieldName")
     private String fieldName;
     @JsonProperty("dataType")

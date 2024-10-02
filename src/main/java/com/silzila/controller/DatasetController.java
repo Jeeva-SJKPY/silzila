@@ -127,6 +127,8 @@ public class DatasetController {
             @RequestParam(name = "dbconnectionid", required = false) String dBConnectionId,
             @RequestParam(name = "datasetid", required = false) String datasetId) throws JsonMappingException, JsonProcessingException, RecordNotFoundException, BadRequestException, SQLException, ClassNotFoundException {       
         String userId = reqHeader.get("username");
+
+
         Object jsonArray = datasetService.relativeFilter(userId, dBConnectionId, datasetId, relativeFilter);
         return (ResponseEntity<?>) ResponseEntity.status(HttpStatus.OK).body(jsonArray.toString());
             }

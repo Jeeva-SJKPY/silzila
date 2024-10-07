@@ -17,7 +17,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 public class FilterPanel implements Serializable {
 
     @JsonProperty("panelName")
-    private String panelName;
+    private String panelName  ;
     @JsonProperty("shouldAllConditionsMatch")
     private Boolean shouldAllConditionsMatch = true;
     @JsonProperty("filters")

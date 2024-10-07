@@ -3,7 +3,7 @@ package com.silzila.querybuilder.calculatedField;
 import com.silzila.dto.DatasetDTO;
 import com.silzila.payload.request.CalculatedFieldRequest;
 
-public class DB2QueryBuilder implements QueryBuilder{
+public class PostgresSQLQueryBuilder implements QueryBuilder{
     private String queryString = "";
     @Override
     public void setSelectClause(CalculatedFieldRequest calculatedFieldRequest, DatasetDTO ds) {

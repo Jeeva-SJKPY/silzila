@@ -5,9 +5,14 @@ import org.springframework.security.web.authentication.www.NonceExpiredException
 public class QueryBuilderFactory {
 
     public static QueryBuilder getQueryBuilder(String vendor){
-        if(vendor.equals("DB2")){
-            return new DB2QueryBuilder();
+        switch(vendor){
+            case "DB2":
+                return new DB2QueryBuilder();
+
+            case "postgresssql":
+                return new PostgresSQLQueryBuilder();
         }
+
         return null ;
     }
 }

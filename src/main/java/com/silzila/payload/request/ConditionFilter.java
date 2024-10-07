@@ -2,24 +2,14 @@ package com.silzila.payload.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ConditionFilter {
-    @JsonProperty("leftOperand")
-    private List<String> leftOperand;
-
-    @JsonProperty("leftOperandType")
-    private List<String> leftOperandType;
-
-    @JsonProperty("operator")
-    private String operator;
-
-    @JsonProperty("rightOperand")
-    private List<String> rightOperand;
-
-    @JsonProperty("rightOperandType")
-    private List<String> rightOperandType;
-
-
+    @JsonProperty("shouldAllConditionsMatch")
+    private Boolean shouldAllConditionsMatch;
+    @JsonProperty("conditions")
+    private List<Condition> conditions;
 
 }

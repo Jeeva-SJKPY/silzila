@@ -6,7 +6,7 @@ public class CalculatedFieldRequest {
     @JsonProperty("fields")
     private Fields fields;
     @JsonProperty("conditionFilters")
-    private ConditionFilter condionFilters;
+    private Condition condionFilters;
     @JsonProperty("flows")
     private Flows flows;
 

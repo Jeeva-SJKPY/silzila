@@ -16,7 +16,7 @@ import com.silzila.payload.request.Measure;
 import com.silzila.payload.request.Query;
 
 
-public class SelectClauseBigquery {
+public class   SelectClauseBigquery {
     private static final Logger logger = LogManager.getLogger(SelectClauseBigquery.class);
 
     /* SELECT clause for MySQL dialect */

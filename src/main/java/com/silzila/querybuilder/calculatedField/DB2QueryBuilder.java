@@ -5,33 +5,10 @@ import com.silzila.payload.request.CalculatedFieldRequest;
 
 public class DB2QueryBuilder implements QueryBuilder{
     private String queryString = "";
+    
+    
     @Override
-    public void setSelectClause(CalculatedFieldRequest calculatedFieldRequest, DatasetDTO ds) {
-
-    }
-
-    @Override
-    public void setFromClause(CalculatedFieldRequest calculatedFieldRequest, DatasetDTO ds) {
-
-    }
-
-    @Override
-    public void setWhereClause(CalculatedFieldRequest calculatedFieldRequest, DatasetDTO ds) {
-
-    }
-
-    @Override
-    public void setGroupByClause(CalculatedFieldRequest calculatedFieldRequest, DatasetDTO ds) {
-
-    }
-
-    @Override
-    public void setOrderByClause(CalculatedFieldRequest calculatedFieldRequest, DatasetDTO ds) {
-
-    }
-
-    @Override
-    public String build() {
+    public String build(CalculatedFieldRequest request) {
         return null;
     }
 }

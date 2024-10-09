@@ -1,14 +1,26 @@
 package com.silzila.payload.request;
 
+import java.util.List;
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@ToString
 public class CalculatedFieldRequest {
     @JsonProperty("fields")
-    private Fields fields;
+    private Map<String, Field> fields;
     @JsonProperty("conditionFilters")
-    private ConditionFilters condionFilters;
+    private Map<String, List<ConditionFilter>> conditionFilters;
     @JsonProperty("flows")
-    private Flows flows;
-
-
+    private Map<String, List<Flow>> flows;
 }

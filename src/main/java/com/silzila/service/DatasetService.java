@@ -25,6 +25,7 @@ import com.silzila.exception.BadRequestException;
 import com.silzila.exception.RecordNotFoundException;
 import com.silzila.domain.entity.Dataset;
 import com.silzila.querybuilder.QueryComposer;
+import com.silzila.querybuilder.calculatedField.CalculatedFieldQueryComposer;
 import com.silzila.querybuilder.filteroptions.FilterOptionsQueryComposer;
 import com.silzila.querybuilder.relativefilter.RelativeFilterQueryComposer;
 import com.silzila.repository.DatasetRepository;
@@ -45,6 +46,9 @@ public class DatasetService {
 
     @Autowired
     QueryComposer queryComposer;
+
+    @Autowired
+    CalculatedFieldQueryComposer calculatedFieldQueryComposer;
 
     @Autowired
     FilterOptionsQueryComposer filterOptionsQueryComposer;
@@ -554,6 +558,11 @@ public class DatasetService {
         
        return connectionPoolService.relativeFilter(userId, dBConnectionId, datasetId, relativeFilter);
 
+    }
+
+    //testing
+    public String calculatedFiled(CalculatedFieldRequest request, String vendor){
+        return  calculatedFieldQueryComposer.composeQuery(request, vendor);
     }
 
 }

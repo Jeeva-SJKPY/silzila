@@ -51,6 +51,8 @@ public class Filter implements Serializable {
     private RelativeCondition relativeCondition = null;
     @JsonProperty("isTillDate")
     private Boolean isTillDate = false; 
+    @JsonProperty("isField")
+    private Boolean isField = true;
     private final static long serialVersionUID = 4876626487235075859L;
 
     /**
@@ -74,7 +76,7 @@ public class Filter implements Serializable {
      */
     public Filter(String tableId, String tableName, String fieldName, Filter.DataType dataType, String uid, Boolean shouldExclude,
             Filter.TimeGrain timeGrain, Filter.Operator operator, List<String> userSelection, String filterType,
-            RelativeCondition relativeCondition, Boolean  isTillDate) {
+            RelativeCondition relativeCondition, Boolean  isTillDate,Boolean isField) {
         super();
         this.tableId = tableId;
         this.tableName = tableName;
@@ -88,6 +90,7 @@ public class Filter implements Serializable {
         this.filterType = filterType;
         this.relativeCondition = relativeCondition;
         this.isTillDate = isTillDate;
+        this.isField = isField;
     }
 
     @JsonProperty("filterType")
@@ -207,6 +210,15 @@ public class Filter implements Serializable {
     public void setIsTillDate(Boolean isTillDate) {
         this.isTillDate = isTillDate;
     }
+
+    public Boolean getIsField() {
+        return isField;
+    }
+
+    public void setIsField(Boolean isField) {
+        this.isField = isField;
+    }
+
 
     @Override
     public String toString() {

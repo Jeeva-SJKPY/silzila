@@ -133,5 +133,13 @@ public class DatasetController {
         return (ResponseEntity<?>) ResponseEntity.status(HttpStatus.OK).body(jsonArray.toString());
             }
 
+    @GetMapping("calculated-field/{vendor}")
+    public String calculatedField(@RequestHeader Map<String, String> reqHeader, 
+        @Valid @RequestBody CalculatedFieldRequest request,
+        @PathVariable String vendor){
+            System.out.println("Request " + request);
+            return datasetService.calculatedFiled(request, vendor);
+        }
+
 
    }

@@ -1,6 +1,7 @@
 package com.silzila.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.silzila.payload.request.CalculatedFieldRequest;
 import com.silzila.payload.request.CustomQueryRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -212,11 +213,13 @@ public class DBConnectionController {
             @RequestParam(value = "recordCount") Integer recordCount,
             @RequestParam(name = "database", required = false) String databaseName,
             @RequestParam(name = "schema", required = false) String schemaName,
-            @RequestParam(name = "table") String tableName)
+            @RequestParam(name = "table") String tableName,
+            @RequestParam(name = "tableId",required = false) String tableId,
+            @RequestBody(required = false) List<CalculatedFieldRequest> calculatedFieldRequest)
             throws RecordNotFoundException, SQLException, BadRequestException, JsonProcessingException, ClassNotFoundException {
         String userId = reqHeader.get("username");
         JSONArray jsonArray = connectionPoolService.getSampleRecords(databaseId,datasetId, userId, databaseName,
-                schemaName, tableName, recordCount);
+                schemaName, tableName, recordCount,tableId,calculatedFieldRequest);
         return ResponseEntity.status(HttpStatus.OK).body(jsonArray.toString());
     }
 

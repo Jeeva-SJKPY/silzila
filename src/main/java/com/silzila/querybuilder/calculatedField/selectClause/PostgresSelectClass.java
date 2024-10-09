@@ -15,6 +15,22 @@ import com.silzila.querybuilder.WhereClause;
 import com.silzila.querybuilder.calculatedField.ConditionFilterToFilter;
 
 public class PostgresSelectClass {
+
+    public static String calculatedFieldsComposed(List<CalculatedFieldRequest> calculatedFieldRequests) {
+        StringBuilder calculatedFieldString = new StringBuilder();
+    
+        for (int i = 0; i < calculatedFieldRequests.size(); i++) {
+            if (i > 0) {
+                calculatedFieldString.append(" ,\n");
+            } else {
+                calculatedFieldString.append("\n");
+            }
+            calculatedFieldString.append(calculatedFieldComposed(calculatedFieldRequests.get(i)));
+        }
+    
+        return calculatedFieldString.toString();
+    }
+    
     
     public static String calculatedFieldComposed(CalculatedFieldRequest calculatedFieldRequest) {
 
@@ -24,6 +40,8 @@ public class PostgresSelectClass {
                 "multiplication", "*",
                 "division", "/"
         );
+
+        StringBuilder calculatedField =  new StringBuilder();
     
         Map<String, Field> fields = calculatedFieldRequest.getFields();
         Map<String, List<ConditionFilter>> conditionFilterMap = calculatedFieldRequest.getConditionFilters()!= null ?
@@ -38,7 +56,8 @@ public class PostgresSelectClass {
         processConditionFilters(conditionFilterMap, fields, flowStringMap, conditionFilterStringMap);
         processFlows(flowForConditionFilter, flowMap, fields, flowStringMap, conditionFilterStringMap, basicMathOperations);
     
-        return flowStringMap.get("f1");
+        return calculatedField.append(" (").append(flowStringMap.get("f1"))
+                            .append( ") AS ").append(calculatedFieldRequest.getCalculatedFieldName()).toString();
     }
     
     // extract flow from condition filters

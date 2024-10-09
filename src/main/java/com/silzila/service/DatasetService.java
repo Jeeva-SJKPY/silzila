@@ -561,8 +561,8 @@ public class DatasetService {
     }
 
     //testing
-    public String calculatedFiled(CalculatedFieldRequest request, String vendor){
-        return  calculatedFieldQueryComposer.composeQuery(request, vendor);
+    public String calculatedFiled(List<CalculatedFieldRequest> requests, String vendor){
+        return  calculatedFieldQueryComposer.composeQuery(requests, vendor);
     }
 
 }

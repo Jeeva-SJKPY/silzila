@@ -17,6 +17,8 @@ import lombok.ToString;
 @Setter
 @ToString
 public class CalculatedFieldRequest {
+    @JsonProperty("calculatedFieldName")
+    private String calculatedFieldName;
     @JsonProperty("fields")
     private Map<String, Field> fields;
     @JsonProperty("conditionFilters")

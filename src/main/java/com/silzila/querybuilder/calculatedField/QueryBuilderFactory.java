@@ -7,7 +7,7 @@ public class QueryBuilderFactory {
             case "DB2":
                 return new DB2QueryBuilder();
 
-            case "postgresssql":
+            case "postgresql":
                 return new PostgresSQLQueryBuilder();
         }
 

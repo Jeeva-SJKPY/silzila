@@ -135,7 +135,7 @@ public class DatasetController {
 
     @GetMapping("calculated-field/{vendor}")
     public String calculatedField(@RequestHeader Map<String, String> reqHeader, 
-        @Valid @RequestBody CalculatedFieldRequest request,
+        @Valid @RequestBody List<CalculatedFieldRequest> request,
         @PathVariable String vendor){
             System.out.println("Request " + request);
             return datasetService.calculatedFiled(request, vendor);

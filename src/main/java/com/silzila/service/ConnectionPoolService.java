@@ -9,7 +9,9 @@ import com.silzila.payload.request.DataSchema;
 import com.silzila.payload.request.FilterPanel;
 import com.silzila.payload.request.RelativeFilterRequest;
 import com.silzila.payload.request.Table;
+import com.silzila.querybuilder.RelationshipClauseGeneric;
 import com.silzila.querybuilder.WhereClause;
+import com.silzila.querybuilder.calculatedField.CalculatedFieldQueryComposer;
 import com.silzila.querybuilder.relativefilter.RelativeFilterQueryComposer;
 import com.silzila.repository.DatasetRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +51,7 @@ import com.silzila.exception.RecordNotFoundException;
 import com.silzila.helper.OracleDbJksRequestProcess;
 import com.silzila.helper.RelativeFilterProcessor;
 import com.silzila.helper.ResultSetToJson;
+import com.silzila.payload.request.CalculatedFieldRequest;
 import com.silzila.payload.request.ColumnFilter;
 import com.silzila.payload.request.DBConnectionRequest;
 import com.silzila.payload.response.MetadataColumn;
@@ -56,6 +59,7 @@ import com.silzila.payload.response.MetadataDatabase;
 import com.silzila.payload.response.MetadataTable;
 import com.silzila.domain.entity.DBConnection;
 import com.silzila.dto.OracleDTO;
+import com.silzila.helper.ColumnListFromClause;
 import com.silzila.helper.CustomQueryValidator;
 import com.silzila.service.DatasetService;
 import org.springframework.web.server.ResponseStatusException;
@@ -66,6 +70,9 @@ public class ConnectionPoolService {
     
     @Autowired
     RelativeFilterQueryComposer relativeFilterQueryComposer;
+
+    @Autowired
+    CalculatedFieldQueryComposer calculatedFieldQueryComposer;
 
     @Autowired
     FileDataService fileDataService;
@@ -889,7 +896,7 @@ public class ConnectionPoolService {
 
     // Metadata discovery - Get Sample Records of table
     public JSONArray getSampleRecords(String databaseId,String datasetId, String userId, String databaseName, String schemaName,
-            String tableName, Integer recordCount)
+            String tableName, Integer recordCount,String tblId,List<CalculatedFieldRequest> calculatedFieldRequests)
             throws RecordNotFoundException, SQLException, BadRequestException, JsonProcessingException, ClassNotFoundException {
         String query = "";
         // first create connection pool to query DB
@@ -920,7 +927,16 @@ public class ConnectionPoolService {
             //generating where clause from the filter panel info
             whereClause = WhereClause.buildWhereClause(filterPanels, vendorName);
 
+            //generating fromclause
+            List<String> allColumnList = (calculatedFieldRequests!=null) 
+                                         ? ColumnListFromClause.getColumnListFromFieldsRequest(calculatedFieldRequests) 
+                                         : new ArrayList<>();
+            if(!allColumnList.contains(tblId)){
+                    allColumnList.add(tblId);
+            }
+            String fromClause = RelationshipClauseGeneric.buildRelationship(allColumnList,ds.getDataSchema(),vendorName);
 
+            StringBuilder calculatedField = new StringBuilder();
             //checking whether the data set has filter or not
             if (ds.getDataSchema().getFilterPanels().isEmpty()) {
 
@@ -932,7 +948,11 @@ public class ConnectionPoolService {
                         throw new BadRequestException("Error: Schema name is not provided!");
                     }
                     // construct query
-                    query = "SELECT * FROM " + schemaName + "." + tableName + " LIMIT " + recordCount;
+                    if(calculatedFieldRequests!=null){
+                        calculatedField.append(" , ").append(calculatedFieldQueryComposer.composeQuery(calculatedFieldRequests, vendorName));
+                    }
+                    query = "SELECT "+ tblId +".* " + calculatedField + " FROM " + fromClause + " LIMIT " + recordCount;
+                    
                 }
                 // for BIGQUERY DB
                 else if (vendorName.equals("bigquery")) {

@@ -136,8 +136,11 @@ public class PostgresSelectClass {
     
             if (firstFlow.getCondition() != null) {
                 processConditionalFlow(flows, flowStringMap, conditionFilterStringMap, fields, flowKey);
-            } else {
-                processNonConditionalFlow(firstFlow, fields, flowStringMap, flowKey, basicMathOperations);
+            } else if (basicMathOperations.containsKey(firstFlow.getFlow())) {
+                processNonConditionalMathFlow(firstFlow, fields, flowStringMap, flowKey, basicMathOperations);
+            }
+            else{
+
             }
         });
     }
@@ -155,8 +158,11 @@ public class PostgresSelectClass {
     
             if (firstFlow.getCondition() != null) {
                 processConditionalFlow(flows, flowStringMap, conditionFilterStringMap, fields, flowKey);
-            } else {
-                processNonConditionalFlow(firstFlow, fields, flowStringMap, flowKey, basicMathOperations);
+            } else if (basicMathOperations.containsKey(firstFlow.getFlow())){
+                processNonConditionalMathFlow(firstFlow, fields, flowStringMap, flowKey, basicMathOperations);
+            }
+            else{
+                processNonConditionalTextFlow(firstFlow, fields, flowStringMap, flowKey);
             }
         });
     }
@@ -195,7 +201,7 @@ public class PostgresSelectClass {
         }
     }
     
-    private static void processNonConditionalFlow(Flow flow,
+    private static void processNonConditionalMathFlow(Flow flow,
                                                   Map<String, Field> fields,
                                                   Map<String, String> flowStringMap,
                                                   String flowKey,
@@ -240,5 +246,57 @@ public class PostgresSelectClass {
         return processedSource;
     }
 
+    private static String processNonConditionalTextFlow(Flow firstFlow, Map<String, Field> fields, Map<String, String> flowStringMap, String flowKey) {
+        String flowType = firstFlow.getFlow();
+        StringBuilder result = new StringBuilder();
+    
+        List<String> processedSources = processSources(firstFlow, fields, flowStringMap);
+    
+        switch (flowType) {
+            case "concat":
+                result.append("concat (\n")
+                      .append(String.join(" ,\n", processedSources))
+                      .append(")");
+                break;
+    
+            case "uppercase":
+                result.append("UPPER (")
+                      .append(String.join("", processedSources))
+                      .append(")");
+                break;
+    
+            case "lowercase":
+                result.append("LOWER (")
+                      .append(String.join("", processedSources))
+                      .append(")");
+                break;
+        }
+    
+        // Store the result in flowStringMap using the flowKey
+        flowStringMap.put(flowKey, result.toString());
+        return result.toString();
+    }
+    
+    private static List<String> processSources(Flow firstFlow, Map<String, Field> fields, Map<String, String> flowStringMap) {
+        List<String> source = firstFlow.getSource();
+        List<String> sourceType = firstFlow.getSourceType();
+        List<String> resultString = new ArrayList<>();
+    
+        for (int i = 0; i < source.size(); i++) {
+            String sourceElement = source.get(i);
+            String type = sourceType.get(i);
+    
+            if ("field".equals(type)) {
+                Field field = fields.get(sourceElement);
+                resultString.add(field.getTableId() + "." + field.getFieldName());
+            } else if ("flow".equals(type)) {
+                resultString.add(flowStringMap.get(sourceElement));
+            } else {
+                resultString.add(sourceElement);
+            }
+        }
+    
+        return resultString;
+    }
 }
     

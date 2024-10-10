@@ -251,10 +251,13 @@ public class PostgresSelectClass {
         StringBuilder result = new StringBuilder();
     
         List<String> processedSources = processSources(firstFlow, fields, flowStringMap);
+
+        List<String> aggregation = firstFlow.getAggregation();
+        String length = aggregation != null && !aggregation.isEmpty() ? aggregation.get(0) : "0";
     
         switch (flowType) {
             case "concat":
-                result.append("concat (\n")
+                result.append("CONCAT (\n")
                       .append(String.join(" ,\n", processedSources))
                       .append(")");
                 break;
@@ -270,6 +273,21 @@ public class PostgresSelectClass {
                       .append(String.join("", processedSources))
                       .append(")");
                 break;
+            case "substringright":
+                result.append("RIGHT(")
+                    .append(processedSources.get(0))
+                    .append(", ")
+                    .append(length)
+                    .append(")");
+                break;
+            case "substringleft":
+                result.append("LEFT(")
+                    .append(processedSources.get(0))
+                    .append(", ")
+                    .append(length)
+                    .append(")");
+                break;
+            
         }
     
         // Store the result in flowStringMap using the flowKey

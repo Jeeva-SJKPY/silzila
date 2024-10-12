@@ -38,7 +38,13 @@ public class PostgresSelectClass {
                 "addition", "+",
                 "subtraction", "-",
                 "multiplication", "*",
-                "division", "/"
+                "division", "/",
+                "ceiling","CEIL",
+                "floor","FLOOR",
+                "absolute","ABS",
+                "power","POWER",
+                "min", "LEAST",
+                "max","GREATEST"
         );
 
         StringBuilder calculatedField =  new StringBuilder();
@@ -201,33 +207,76 @@ public class PostgresSelectClass {
         }
     }
     
+    //to process math flow
     private static void processNonConditionalMathFlow(Flow flow,
                                                   Map<String, Field> fields,
                                                   Map<String, String> flowStringMap,
                                                   String flowKey,
                                                   Map<String, String> basicMathOperations) {
+    List<String> result = new ArrayList<>();
+    List<String> source = flow.getSource();
+    List<String> sourceType = flow.getSourceType();
+    String flowType = flow.getFlow();
     
-        List<String> result = new ArrayList<>();
-        List<String> source = flow.getSource();
-        List<String> sourceType = flow.getSourceType();
+    if (basicMathOperations.containsKey(flowType)) {
+        if (List.of("addition", "subtraction", "multiplication", "division").contains(flowType)) {
+            processMathBasicOperations(flow, fields, flowStringMap, basicMathOperations, result, flowKey, source, sourceType);
+        } else if (List.of("ceiling", "floor", "absolute").contains(flowType)) {
+            processMathSingleArgumentOperations(flow, fields, flowStringMap, basicMathOperations, flowKey, source, sourceType);
+        } else if (List.of("min", "max").contains(flowType)) {
+            processMultipleArgumentOperations(flow, fields, flowStringMap, basicMathOperations, flowKey, result, source, sourceType);
+        } else if ("power".equals(flowType)) {
+            processPowerOperation(flow, fields, flowStringMap, basicMathOperations, flowKey, source, sourceType);
+        }
+    }
+}
 
-        System.out.println("Its coming");
-    
+    // to process math basic operations - addition, subtraction, multiplicattion, division
+    private static void processMathBasicOperations(Flow flow, Map<String, Field> fields, Map<String, String> flowStringMap,
+                                            Map<String, String> basicMathOperations, List<String> result,
+                                            String flowKey,List<String> source,List<String> sourceType) {
         for (int i = 0; i < source.size(); i++) {
             String processedSource = getProcessedSource(source.get(i), sourceType.get(i), fields, flowStringMap, flow, i);
             result.add(processedSource);
-    
             if (i < source.size() - 1) {
                 result.add(basicMathOperations.get(flow.getFlow()));
             }
         }
-
-    
         flowStringMap.put(flowKey, String.join(" ", result));
-
-        System.out.println(" Ans " + String.join(" ", result));
     }
-    
+
+    // to procees math single argument operations - absolute,ceiling,floor
+    private static void processMathSingleArgumentOperations(Flow flow, Map<String, Field> fields, Map<String, String> flowStringMap,
+                                                        Map<String, String> basicMathOperations, String flowKey,
+                                                        List<String> source, List<String> sourceType) {
+        String processedSource = getProcessedSource(source.get(0), sourceType.get(0), fields, flowStringMap, flow, 0);
+        flowStringMap.put(flowKey, basicMathOperations.get(flow.getFlow()) + "(" + processedSource + ")");
+    }
+
+    // to procees math multiple argument operations - minimum and maximum
+    private static void processMultipleArgumentOperations(Flow flow, Map<String, Field> fields, Map<String, String> flowStringMap,
+                                                        Map<String, String> basicMathOperations, String flowKey,
+                                                        List<String> result, List<String> source, List<String> sourceType) {
+        for (int i = 0; i < source.size(); i++) {
+            String processedSource = getProcessedSource(source.get(i), sourceType.get(i), fields, flowStringMap, flow, i);
+            result.add(processedSource);
+            if (i < source.size() - 1) {
+                result.add(",");
+            }
+        }
+        flowStringMap.put(flowKey, basicMathOperations.get(flow.getFlow()) + "(" + String.join(" ", result) + ")");
+    }
+
+    // To process the power operation
+    // 1st source - base value, 2nd source - exponent value
+    private static void processPowerOperation(Flow flow, Map<String, Field> fields, Map<String, String> flowStringMap,
+                                            Map<String, String> basicMathOperations, String flowKey,
+                                            List<String> source, List<String> sourceType) {
+        String processedSource = getProcessedSource(source.get(0), sourceType.get(0), fields, flowStringMap, flow, 0);
+        flowStringMap.put(flowKey, basicMathOperations.get(flow.getFlow()) + "(" + processedSource + "," + source.get(1) + ")");
+    }
+
+    // to get a list of source with and without aggregation
     private static String getProcessedSource(String source, String sourceType,
                                              Map<String, Field> fields, Map<String, String> flowStringMap, Flow flow, int index) {
         String processedSource = "";

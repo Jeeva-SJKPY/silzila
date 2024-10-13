@@ -31,6 +31,10 @@ import lombok.Builder;
 @Generated("jsonschema2pojo")
 public class Measure implements Serializable {
 
+    @JsonProperty("isCalculatedField")
+    private Boolean isCalculatedField;
+    @JsonProperty("calculatedFieldName")
+    private String calculatedFieldName;
     @JsonProperty("tableId")
     private String tableId;
     @JsonProperty("fieldName")
@@ -76,10 +80,12 @@ public class Measure implements Serializable {
      * @param disableReportFilters
      * @param isOverrideMeasure
      */
-    public Measure(String tableId, String fieldName, Measure.DataType dataType, Measure.TimeGrain timeGrain, Measure.Aggr aggr,
+    public Measure(Boolean isCalculatedField,String calculatedFieldName,String tableId, String fieldName, Measure.DataType dataType, Measure.TimeGrain timeGrain, Measure.Aggr aggr,
             String[] windowFn, int[] windowFnOption, int[] windowFnMatrix, int[] windowFnPartition, Boolean disableReportFilters,
             Integer measureOrder) {
         super();
+        this.isCalculatedField = isCalculatedField;
+        this.calculatedFieldName = calculatedFieldName;
         this.tableId = tableId;
         this.fieldName = fieldName;
         this.dataType = dataType;
@@ -93,6 +99,25 @@ public class Measure implements Serializable {
         this.measureOrder = measureOrder;
     }
 
+    @JsonProperty("isCalculatedField")
+    public Boolean getIsCalculatedField() {
+        return isCalculatedField;
+    }
+
+    @JsonProperty("isCalculatedField")
+    public void setIsCalculatedField(Boolean calculatedField) {
+        isCalculatedField = calculatedField;
+    }
+
+    @JsonProperty("calculatedFieldName")
+    public String getCalculatedFieldName() {
+        return calculatedFieldName;
+    }
+
+    @JsonProperty("calculatedFieldName")
+    public void setCalculatedFieldName(String calculatedFieldName) {
+        this.calculatedFieldName = calculatedFieldName;
+    }
     @JsonProperty("tableId")
     public String getTableId() {
         return tableId;
@@ -208,6 +233,14 @@ public class Measure implements Serializable {
         StringBuilder sb = new StringBuilder();
         sb.append(Measure.class.getName()).append('@').append(Integer.toHexString(System.identityHashCode(this)))
                 .append('[');
+        sb.append("isCalculatedField");
+        sb.append('=');
+        sb.append((this.isCalculatedField));
+        sb.append(',');
+        sb.append("calculatedFieldName");
+        sb.append('=');
+        sb.append(((this.calculatedFieldName == null) ? "<null>" : this.calculatedFieldName));
+        sb.append(',');
         sb.append("tableId");
         sb.append('=');
         sb.append(((this.tableId == null) ? "<null>" : this.tableId));

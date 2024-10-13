@@ -25,4 +25,5 @@ public class CalculatedFieldRequest {
     private Map<String, List<ConditionFilter>> conditionFilters;
     @JsonProperty("flows")
     private Map<String, List<Flow>> flows;
-}
+
+    }

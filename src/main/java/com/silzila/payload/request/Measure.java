@@ -17,7 +17,7 @@ import lombok.Builder;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
         "isCalculatedField",
-        "calculatedFieldName",
+        "calculatedField",
         "tableId",
         "fieldName",
         "dataType",
@@ -35,8 +35,8 @@ public class Measure implements Serializable {
 
     @JsonProperty("isCalculatedField")
     private Boolean isCalculatedField;
-    @JsonProperty("calculatedFieldName")
-    private String calculatedFieldName;
+    @JsonProperty("calculatedField")
+    private CalculatedFieldRequest calculatedField;
     @JsonProperty("tableId")
     private String tableId;
     @JsonProperty("fieldName")
@@ -82,12 +82,12 @@ public class Measure implements Serializable {
      * @param disableReportFilters
      * @param isOverrideMeasure
      */
-    public Measure(Boolean isCalculatedField,String calculatedFieldName,String tableId, String fieldName, Measure.DataType dataType, Measure.TimeGrain timeGrain, Measure.Aggr aggr,
+    public Measure(Boolean isCalculatedField,CalculatedFieldRequest calculatedField,String tableId, String fieldName, Measure.DataType dataType, Measure.TimeGrain timeGrain, Measure.Aggr aggr,
             String[] windowFn, int[] windowFnOption, int[] windowFnMatrix, int[] windowFnPartition, Boolean disableReportFilters,
             Integer measureOrder) {
         super();
         this.isCalculatedField = isCalculatedField;
-        this.calculatedFieldName = calculatedFieldName;
+        this.calculatedField = calculatedField;
         this.tableId = tableId;
         this.fieldName = fieldName;
         this.dataType = dataType;
@@ -111,14 +111,14 @@ public class Measure implements Serializable {
         isCalculatedField = calculatedField;
     }
 
-    @JsonProperty("calculatedFieldName")
-    public String getCalculatedFieldName() {
-        return calculatedFieldName;
+    @JsonProperty("calculatedField")
+    public CalculatedFieldRequest getCalculatedField() {
+        return calculatedField;
     }
 
-    @JsonProperty("calculatedFieldName")
-    public void setCalculatedFieldName(String calculatedFieldName) {
-        this.calculatedFieldName = calculatedFieldName;
+    @JsonProperty("calculatedField")
+    public void setCalculatedFieldName(CalculatedFieldRequest calculatedField) {
+        this.calculatedField = calculatedField;
     }
     @JsonProperty("tableId")
     public String getTableId() {
@@ -241,7 +241,7 @@ public class Measure implements Serializable {
         sb.append(',');
         sb.append("calculatedFieldName");
         sb.append('=');
-        sb.append(((this.calculatedFieldName == null) ? "<null>" : this.calculatedFieldName));
+        sb.append(((this.calculatedField == null) ? "<null>" : this.calculatedField));
         sb.append(',');
         sb.append("tableId");
         sb.append('=');

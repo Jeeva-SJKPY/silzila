@@ -15,7 +15,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
         "isCalculatedField",
-        "calculatedFieldName",
+        "calculatedField",
         "tableId",
         "fieldName",
         "dataType",
@@ -27,8 +27,8 @@ public class Dimension implements Serializable {
 
     @JsonProperty("isCalculatedField")
     private Boolean isCalculatedField;
-    @JsonProperty("calculatedFieldName")
-    private String calculatedFieldName;
+    @JsonProperty("calculatedField")
+    private CalculatedFieldRequest calculatedField;
     @JsonProperty("tableId")
     private String tableId;
     @JsonProperty("fieldName")
@@ -55,10 +55,10 @@ public class Dimension implements Serializable {
      * @param dataType
      * @param tableId
      */
-    public Dimension(Boolean isCalculatedField,String calculatedFieldName,String tableId, String fieldName, Dimension.DataType dataType, Dimension.TimeGrain timeGrain,Boolean rollupDepth) {
+    public Dimension(Boolean isCalculatedField,CalculatedFieldRequest calculatedField,String tableId, String fieldName, Dimension.DataType dataType, Dimension.TimeGrain timeGrain,Boolean rollupDepth) {
         super();
         this.isCalculatedField = isCalculatedField;
-        this.calculatedFieldName = calculatedFieldName;
+        this.calculatedField = calculatedField;
         this.tableId = tableId;
         this.fieldName = fieldName;
         this.dataType = dataType;
@@ -76,14 +76,14 @@ public class Dimension implements Serializable {
         isCalculatedField = calculatedField;
     }
 
-    @JsonProperty("calculatedFieldName")
-    public String getCalculatedFieldName() {
-        return calculatedFieldName;
+    @JsonProperty("calculatedField")
+    public CalculatedFieldRequest getCalculatedField() {
+        return calculatedField;
     }
 
-    @JsonProperty("calculatedFieldName")
-    public void setCalculatedFieldName(String calculatedFieldName) {
-        this.calculatedFieldName = calculatedFieldName;
+    @JsonProperty("calculatedField")
+    public void setCalculatedField(CalculatedFieldRequest calculatedField) {
+        this.calculatedField = calculatedField;
     }
     @JsonProperty("rollupDepth")
     public Boolean isRollupDepth() {
@@ -145,7 +145,7 @@ public class Dimension implements Serializable {
         sb.append(',');
         sb.append("calculatedFieldName");
         sb.append('=');
-        sb.append(((this.calculatedFieldName == null) ? "<null>" : this.calculatedFieldName));
+        sb.append(((this.calculatedField == null) ? "<null>" : this.calculatedField));
         sb.append(',');
         sb.append("tableId");
         sb.append('=');

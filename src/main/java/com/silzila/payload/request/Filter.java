@@ -14,6 +14,8 @@ import com.fasterxml.jackson.annotation.JsonValue;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
         "filterType",
+        "isCalculatedField",
+        "calculatedFieldName",
         "tableId",
         "tableName",
         "fieldName",
@@ -29,6 +31,10 @@ public class Filter implements Serializable {
 
     @JsonProperty("filterType")
     private String filterType = null;
+    @JsonProperty("isCalculatedField")
+    private Boolean isCalculatedField;
+    @JsonProperty("calculatedFieldName")
+    private String calculatedFieldName;
     @JsonProperty("tableId")
     private String tableId;
     @JsonProperty("tableName")
@@ -74,10 +80,12 @@ public class Filter implements Serializable {
      * @param operator
      * @param relativeCondition
      */
-    public Filter(String tableId, String tableName, String fieldName, Filter.DataType dataType, String uid, Boolean shouldExclude,
+    public Filter(Boolean isCalculatedField,String calculatedFieldName,String tableId, String tableName, String fieldName, Filter.DataType dataType, String uid, Boolean shouldExclude,
             Filter.TimeGrain timeGrain, Filter.Operator operator, List<String> userSelection, String filterType,
             RelativeCondition relativeCondition, Boolean  isTillDate,Boolean isField) {
         super();
+        this.isCalculatedField = isCalculatedField;
+        this.calculatedFieldName = calculatedFieldName;
         this.tableId = tableId;
         this.tableName = tableName;
         this.fieldName = fieldName;
@@ -101,6 +109,26 @@ public class Filter implements Serializable {
     @JsonProperty("filterType")
     public void setFilterType(String filterType) {
         this.filterType = filterType;
+    }
+
+    @JsonProperty("isCalculatedField")
+    public Boolean getIsCalculatedField() {
+        return isCalculatedField;
+    }
+
+    @JsonProperty("isCalculatedField")
+    public void setIsCalculatedField(Boolean calculatedField) {
+        isCalculatedField = calculatedField;
+    }
+
+    @JsonProperty("calculatedFieldName")
+    public String getCalculatedFieldName() {
+        return calculatedFieldName;
+    }
+
+    @JsonProperty("calculatedFieldName")
+    public void setCalculatedFieldName(String calculatedFieldName) {
+        this.calculatedFieldName = calculatedFieldName;
     }
 
     @JsonProperty("tableId")
@@ -228,6 +256,14 @@ public class Filter implements Serializable {
         sb.append("filterType");
         sb.append('=');
         sb.append(((this.filterType == null) ? "<null>" : this.filterType));
+        sb.append(',');
+        sb.append("isCalculatedField");
+        sb.append('=');
+        sb.append((this.isCalculatedField));
+        sb.append(',');
+        sb.append("calculatedFieldName");
+        sb.append('=');
+        sb.append(((this.calculatedFieldName == null) ? "<null>" : this.calculatedFieldName));
         sb.append(',');
         sb.append("tableId");
         sb.append('=');

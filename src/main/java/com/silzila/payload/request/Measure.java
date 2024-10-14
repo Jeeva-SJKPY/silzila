@@ -16,6 +16,8 @@ import lombok.Builder;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
+        "isCalculatedField",
+        "calculatedFieldName",
         "tableId",
         "fieldName",
         "dataType",

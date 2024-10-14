@@ -13,6 +13,7 @@ import com.silzila.payload.request.Filter;
 import com.silzila.payload.request.Flow;
 import com.silzila.querybuilder.WhereClause;
 import com.silzila.querybuilder.calculatedField.ConditionFilterToFilter;
+import com.silzila.querybuilder.calculatedField.DateFlow.PostgresDateFlow;
 
 public class PostgresSelectClass {
 
@@ -195,8 +196,11 @@ public class PostgresSelectClass {
             } else if (basicMathOperations.containsKey(firstFlow.getFlow())){
                 processNonConditionalMathFlow(firstFlow, fields, flowStringMap, flowKey, basicMathOperations);
             }
-            else{
+            else if (basicTextOperations.containsKey(firstFlow.getFlow())){
                 processNonConditionalTextFlow(firstFlow, fields, flowStringMap, flowKey);
+            }
+            else{
+                processNonConditionalDateFlow(firstFlow, fields, flowStringMap, flowKey);
             }
         });
     }
@@ -418,6 +422,11 @@ public class PostgresSelectClass {
         }
     
         return resultString;
+    }
+
+    private static void processNonConditionalDateFlow(Flow firstFlow, Map<String, Field> fields, Map<String, String> flowStringMap, String flowKey){
+            String dateFlow = PostgresDateFlow.postgresDateFlow(firstFlow,fields,flowStringMap,flowKey);
+            flowStringMap.put(flowKey, dateFlow);
     }
 }
     

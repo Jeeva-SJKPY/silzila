@@ -2,10 +2,9 @@ package com.silzila.querybuilder;
 
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-
 import com.silzila.payload.request.Filter;
 import com.silzila.exception.BadRequestException;
+import com.silzila.helper.OptionsBuilder;
 import com.silzila.helper.QueryNegator;
 
 public class WhereClauseDateBigquery {
@@ -41,32 +40,31 @@ public class WhereClauseDateBigquery {
 
                 if (filter.getTimeGrain().name().equals("YEAR")) {
                     field = "EXTRACT(YEAR FROM " + filter.getTableId() + "." + filter.getFieldName() + ")";
-                    options =  filter.getUserSelection().stream().filter(value -> value != null && !"null".equalsIgnoreCase(value)).collect(Collectors.joining(", "));                    
+                    options = OptionsBuilder.buildIntegerOptions(filter.getUserSelection());                    
                 } else if (filter.getTimeGrain().name().equals("QUARTER")) {
                     field = "CONCAT('Q', EXTRACT(QUARTER FROM " + filter.getTableId() + "." + filter.getFieldName() + "))";
-                    options = "'" + filter.getUserSelection().stream().filter(value -> value != null && !"null".equalsIgnoreCase(value)).collect(Collectors.joining("', '")) + "'";                   
+                    options = OptionsBuilder.buildStringOptions(filter.getUserSelection());                   
                 } else if (filter.getTimeGrain().name().equals("MONTH")) {
                     field = "FORMAT_DATE('%B', DATE(" + filter.getTableId() + "." + filter.getFieldName() + "))";
-                    options = "'" + filter.getUserSelection().stream().filter(value -> value != null && !"null".equalsIgnoreCase(value)).collect(Collectors.joining("', '")) + "'";  
+                    options = OptionsBuilder.buildStringOptions(filter.getUserSelection());  
                 } else if (filter.getTimeGrain().name().equals("YEARQUARTER")) {
                     field = "CONCAT(EXTRACT(YEAR FROM " + filter.getTableId() + "." + filter.getFieldName() + "), '-Q', EXTRACT(QUARTER FROM "
                             + filter.getTableId() + "." + filter.getFieldName() + "))";
-                    options = "'" + filter.getUserSelection().stream().filter(value -> value != null && !"null".equalsIgnoreCase(value)).collect(Collectors.joining("', '")) + "'";
+                    options = OptionsBuilder.buildStringOptions(filter.getUserSelection()); 
                 } else if (filter.getTimeGrain().name().equals("YEARMONTH")) {
                     field = "FORMAT_DATE('%Y-%m', DATE(" + filter.getTableId() + "." + filter.getFieldName() + "))";
-                    options = "'" + filter.getUserSelection().stream().filter(value -> value != null && !"null".equalsIgnoreCase(value)).collect(Collectors.joining("', '")) + "'"; 
+                    options = OptionsBuilder.buildStringOptions(filter.getUserSelection()); 
                 } else if (filter.getTimeGrain().name().equals("DATE")) {
                     field = "DATE(" + filter.getTableId() + "." + filter.getFieldName() + ")";
-                    options = "'" + filter.getUserSelection().stream().filter(value -> value != null && !"null".equalsIgnoreCase(value)).collect(Collectors.joining("', '")) + "'";                  
+                    options = OptionsBuilder.buildStringOptions(filter.getUserSelection());                  
                 } else if (filter.getTimeGrain().name().equals("DAYOFWEEK")) {
                     field = "FORMAT_DATE('%A', DATE(" + filter.getTableId() + "." + filter.getFieldName() + "))";
-                    options = "'" + filter.getUserSelection().stream().filter(value -> value != null && !"null".equalsIgnoreCase(value)).collect(Collectors.joining("', '")) + "'";                   
+                    options = OptionsBuilder.buildStringOptions(filter.getUserSelection());                   
                 } else if (filter.getTimeGrain().name().equals("DAYOFMONTH")) {
                     field = "EXTRACT(DAY FROM " + filter.getTableId() + "." + filter.getFieldName() + ")";
-                    options =  filter.getUserSelection().stream().filter(value -> value != null && !"null".equalsIgnoreCase(value)).collect(Collectors.joining(", "));
-                   
+                    options = OptionsBuilder.buildIntegerOptions(filter.getUserSelection());
                 }
-                
+
                 String nullCondition = NullClauseGenerator.generateNullCheckQuery(filter, excludeOperator);
                 where = field + excludeOperator + "IN (" + options + ")" + nullCondition;
                 

@@ -54,7 +54,7 @@ public class PostgresSelectClass {
             } else {
                 calculatedFieldString.append("\n");
             }
-            calculatedFieldString.append(calculatedFieldComposed(calculatedFieldRequests.get(i)));
+            calculatedFieldString.append(calculatedFieldComposedWithAlias(calculatedFieldRequests.get(i)));
         }
     
         return calculatedFieldString.toString();
@@ -91,8 +91,15 @@ public class PostgresSelectClass {
         processConditionFilters(conditionFilterMap, fields, flowStringMap, conditionFilterStringMap);
         processFlows(flowForConditionFilter, flowMap, fields, flowStringMap, conditionFilterStringMap, basicMathOperations);
     
-        return calculatedField.append(" (").append(flowStringMap.get("f1"))
-                            .append( ") AS ").append(calculatedFieldRequest.getCalculatedFieldName()).toString();
+        return calculatedField.append(flowStringMap.get("f1")).toString();
+    }
+
+    public static String calculatedFieldComposedWithAlias(CalculatedFieldRequest calculatedFieldRequest){
+
+        StringBuilder calculatedField = new StringBuilder();
+
+        return calculatedField.append(" (").append(calculatedFieldComposed(calculatedFieldRequest))
+        .append( ") AS ").append(calculatedFieldRequest.getCalculatedFieldName()).toString();
     }
     
     // extract flow from condition filters

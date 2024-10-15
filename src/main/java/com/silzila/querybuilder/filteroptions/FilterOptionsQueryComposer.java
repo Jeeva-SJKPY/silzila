@@ -24,45 +24,7 @@ public class FilterOptionsQueryComposer {
         logger.info("----------- FilterOptionsQueryComposer calling......");
         String finalQuery = "";
         //if dataset is null calling getFilterOptions functions with null value for ds
-        if (ds == null) {
-            if (vendorName.equals("postgresql") || vendorName.equals("redshift")) {
-                logger.info("------ inside postges/redshift block");
-                finalQuery = FilterQueryPostgres.getFilterOptions(cf, null);
-            } else if (vendorName.equals("mysql")) {
-                logger.info("------ inside mysql block");
-                finalQuery = FilterQueryMysql.getFilterOptions(cf, null);
-            } else if (vendorName.equals("sqlserver")) {
-                logger.info("------ inside sql server block");
-                finalQuery = FilterQuerySqlserver.getFilterOptions(cf, null);
-            } else if (vendorName.equals("databricks")) {
-                logger.info("------ inside databricks block");
-                finalQuery = FilterQueryDatabricks.getFilterOptions(cf, null);
-            } else if (vendorName.equals("duckdb")) {
-                logger.info("------ inside databricks block");
-                finalQuery = FilterQueryDuckDb.getFilterOptions(cf, null);
-            } else if (vendorName.equals("bigquery")) {
-                logger.info("------ inside bigquery block");
-                finalQuery = FilterQueryBigquery.getFilterOptions(cf, null);
-            } else if (vendorName.equals("oracle")) {
-                logger.info("------ inside Oracle block");
-                finalQuery = FilterQueryOracle.getFilterOptions(cf, null);
-            } else if (vendorName.equals("snowflake")) {
-                logger.info("------ inside snowflake block");
-                finalQuery = FilterQuerySnowflake.getFilterOptions(cf, null);
-            } else if (vendorName.equals("motherduck")) {
-                logger.info("------ inside motherduck block");
-                finalQuery = FilterQueryMotherduck.getFilterOptions(cf, null);
-            } else if (vendorName.equals("db2")) {
-                logger.info("------ inside DB2 block");
-                finalQuery = FilterQueryDB2.getFilterOptions(cf, null);
-            } else if (vendorName.equals("teradata")) {
-                logger.info("------ inside teradata block");
-                finalQuery = FilterQueryTeraData.getFilterOptions(cf, null);
-            } else {
-                throw new BadRequestException("Error: DB vendor Name is wrong!");
-            }
-        }
-
+        
         /*
          * builds SELECT Clause of SQL
          * SELECT clause is the most varying of all clauses, different for each dialect
@@ -71,23 +33,24 @@ public class FilterOptionsQueryComposer {
          * select_dim_list has column alias and group_by_dim_list & order_by_dim_list
          * don't have alias
          */
-        else {
             Table table = null;
-            for (int i = 0; i < ds.getDataSchema().getTables().size(); i++) {
-                if (ds.getDataSchema().getTables().get(i).getId().equals(cf.getTableId())) {
-                    table = ds.getDataSchema().getTables().get(i);
-                    break;
+            
+            if(ds != null){
+                for (int i = 0; i < ds.getDataSchema().getTables().size(); i++) {
+                    if (ds.getDataSchema().getTables().get(i).getId().equals(cf.getTableId())) {
+                        table = ds.getDataSchema().getTables().get(i);
+                        break;
+                    }
                 }
-            }
 
-
-            if (Objects.isNull(table)) {
-                throw new BadRequestException("Error: RequestedFiter Column is not available in Dataset!");
+                if (Objects.isNull(table)) {
+                    throw new BadRequestException("Error: RequestedFiter Column is not available in Dataset!");
+                }
             }
 
             if (vendorName.equals("postgresql") || vendorName.equals("redshift")) {
                 logger.info("------ inside postges/redshift block");
-                finalQuery = FilterQueryPostgres.getFilterOptions(cf, table);
+                finalQuery = FilterQueryPostgres.getFilterOptions(cf, table,ds);
             } else if (vendorName.equals("mysql")) {
                 logger.info("------ inside mysql block");
                 finalQuery = FilterQueryMysql.getFilterOptions(cf, table);
@@ -121,7 +84,7 @@ public class FilterOptionsQueryComposer {
             } else {
                 throw new BadRequestException("Error: DB vendor Name is wrong!");
             }
-        }
+
         return finalQuery;
     }
 }

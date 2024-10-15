@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import com.silzila.payload.request.CalculatedFieldRequest;
@@ -14,24 +13,30 @@ import com.silzila.payload.request.Query;
 
 public class ColumnListFromClause {
     
-    public static List<String> getColumnListFromQuery(Query req){
+    public static List<String> getColumnListFromQuery(Query req) {
 
-        Set<String> allColumnList = new HashSet<>();
-        // take list of unique dim tables & another list on all unique tables
-        req.getDimensions().forEach((dim) -> allColumnList.add(dim.getTableId()));
-        // take list of unique measure tables & another list on all unique tables
-        req.getMeasures().forEach((measure) -> allColumnList.add(measure.getTableId()));
-        // take list of unique field tables & another list on all unique tables
-        req.getFields().forEach((field) -> allColumnList.add(field.getTableId()));
-        // take list of unique filter tables & another list on all unique tables
-        req.getFilterPanels().forEach((panel) -> {
-            panel.getFilters().forEach((filter) ->allColumnList.add(filter.getTableId()));
-        });
-
-        return new ArrayList<>(allColumnList);
-
+        Set<String> uniqueTables = new HashSet<>();
+    
+        req.getDimensions().forEach(dim -> collectTableIds(dim.getTableId(), dim.getIsCalculatedField() ? dim.getCalculatedField().getFields() : null, uniqueTables));
+    
+        req.getMeasures().forEach(measure -> collectTableIds(measure.getTableId(), measure.getIsCalculatedField() ? measure.getCalculatedField().getFields() : null, uniqueTables));
+        req.getFields().forEach(field -> uniqueTables.add(field.getTableId()));
+        
+        req.getFilterPanels().forEach(panel -> 
+            panel.getFilters().forEach(filter -> collectTableIds(filter.getTableId(), filter.getIsCalculatedField() ? filter.getCalculatedField().getFields() : null, uniqueTables)));
+    
+        return new ArrayList<>(uniqueTables);
     }
-
+    
+    private static void collectTableIds(String tableId, Map<String, Field> fields, Set<String> uniqueTables) {
+        if (tableId != null) {
+            uniqueTables.add(tableId);
+        }
+        if (fields != null) {
+            uniqueTables.addAll(getColumnListFromFields(fields));
+        }
+    }
+    
     public static List<String> getColumnListFromFields(Map<String, Field> fields) {
         return fields.values().stream()
             .map(Field::getTableId)
@@ -45,6 +50,8 @@ public class ColumnListFromClause {
             .distinct()
             .collect(Collectors.toList());
     }
+
+
     
     
 

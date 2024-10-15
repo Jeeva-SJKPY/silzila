@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import com.silzila.payload.request.Filter;
 import com.silzila.payload.request.FilterPanel;
 // import com.silzila.querybuilder.WhereClauseDatePostgres;
+import com.silzila.querybuilder.calculatedField.selectClause.PostgresSelectClass;
 
 // to build where clause in Query construction
 public class WhereClause {
@@ -49,6 +50,8 @@ public class WhereClause {
                 Filter filter = filterPanels.get(i).getFilters().get(j);
                 // System.out.println("Filter =========== " + filter.toString());
 
+                String field = filter.getIsCalculatedField()?PostgresSelectClass.calculatedFieldComposed(filter.getCalculatedField()):filter.getTableId() + "." + filter.getFieldName();
+
                 // check if Negative match or Positive match
                 String excludeSymbol = QueryNegator.makeNagateExpression(filter.getShouldExclude(),
                         filter.getOperator().name());
@@ -60,7 +63,7 @@ public class WhereClause {
                     filter.getUserSelection().size() == 1 && 
                     (filter.getUserSelection().get(0) == null || "null".equals(filter.getUserSelection().get(0))))) {
                     
-                    where = filter.getTableId() + "." + filter.getFieldName() + " IS " + excludeOperator + "NULL";
+                        where = field + " IS " + excludeOperator + "NULL";
                 }
 
                 /*
@@ -80,7 +83,7 @@ public class WhereClause {
                         String options = "";
                         options = OptionsBuilder.buildStringOptions(filter.getUserSelection());
                         String nullCondition = NullClauseGenerator.generateNullCheckQuery(filter, excludeOperator);
-                        where = filter.getTableId() + "." + filter.getFieldName() + excludeSymbol + "IN (" + options
+                        where = field + excludeSymbol + "IN (" + options
                                 + ")" + nullCondition;
                     }
                     // Wildcard - begins with a particular string

@@ -1,19 +1,25 @@
 package com.silzila.querybuilder.filteroptions;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import com.silzila.dto.DatasetDTO;
 import com.silzila.exception.BadRequestException;
+import com.silzila.helper.ColumnListFromClause;
 import com.silzila.payload.request.ColumnFilter;
 import com.silzila.payload.request.Table;
+import com.silzila.querybuilder.RelationshipClauseGeneric;
+import com.silzila.querybuilder.calculatedField.selectClause.PostgresSelectClass;
 
 public class FilterQueryPostgres {
 
     private static final Logger logger = LogManager.getLogger(FilterQueryPostgres.class);
 
-    public static String getFilterOptions(ColumnFilter req, Table table) throws BadRequestException {
+    public static String getFilterOptions(ColumnFilter req, Table table,DatasetDTO datasetDTO) throws BadRequestException {
         logger.info("=========== FilterQueryPostgres fn calling...");
         /*
          * ************************************************
@@ -26,6 +32,16 @@ public class FilterQueryPostgres {
         if (table == null) {
             fromClause = " FROM " + req.getSchemaName() + "." + req.getTableName() + " AS " + req.getTableId()+" ";
         }
+        else if(req.getIsCalculatedField()){
+            //generating fromclause
+            List<String> allColumnList = (req.getCalculatedField()!=null) 
+                                         ? ColumnListFromClause.getColumnListFromFields(req.getCalculatedField().getFields()) 
+                                         : new ArrayList<>();
+            if(!allColumnList.contains(req.getTableId())){
+                    allColumnList.add(req.getTableId());
+            }
+            fromClause =" FROM " + RelationshipClauseGeneric.buildRelationship(allColumnList,datasetDTO.getDataSchema(),"postgresql") + " ";
+        }
         else{
         if(!table.isCustomQuery()) {
             fromClause = " FROM " + table.getSchema() + "." + table.getTable() + " AS " +table.getId()+" ";
@@ -34,8 +50,10 @@ public class FilterQueryPostgres {
         }
         }
 
+        String selectField = req.getIsCalculatedField()? PostgresSelectClass.calculatedFieldComposed(req.getCalculatedField()) : req.getTableId()+ "."  + req.getFieldName();
+
         if (List.of("TEXT", "BOOLEAN").contains(req.getDataType().name())) {
-            query = "SELECT DISTINCT " + req.getTableId()+ "."  + req.getFieldName() + fromClause + "ORDER BY 1";
+            query = "SELECT DISTINCT " + selectField + fromClause + "ORDER BY 1";
         }
 
         /*
@@ -48,12 +66,12 @@ public class FilterQueryPostgres {
             if (!Objects.isNull(req.getFilterOption())) {
                 // get distinct values
                 if (req.getFilterOption().name().equals("ALL_VALUES")) {
-                    query = "SELECT DISTINCT " + req.getTableId()+ "." + req.getFieldName() + fromClause + "ORDER BY 1";
+                    query = "SELECT DISTINCT " + selectField + fromClause + "ORDER BY 1";
                 }
                 // get Range values
                 else if (req.getFilterOption().name().equals("MIN_MAX")) {
-                    query = "SELECT MIN("  + req.getTableId()+ "." + req.getFieldName() + ") AS min, MAX("
-                            + req.getTableId()+ "." + req.getFieldName() + ") AS max" + fromClause;
+                    query = "SELECT MIN("  + selectField + ") AS min, MAX("
+                            + selectField + ") AS max" + fromClause;
                 }
                 // if filter option is not provided, throw error
             } else {
@@ -76,38 +94,38 @@ public class FilterQueryPostgres {
              */
             if (req.getFilterOption().name().equals("ALL_VALUES")) {
                 if (req.getTimeGrain().name().equals("YEAR")) {
-                    String field = "EXTRACT(YEAR FROM " + req.getTableId()+ "."  + req.getFieldName()
+                    String field = "EXTRACT(YEAR FROM " + selectField
                             + ")::INTEGER AS Year";
                     query = "SELECT DISTINCT " + field + fromClause + "ORDER BY 1";
                 } else if (req.getTimeGrain().name().equals("QUARTER")) {
-                    String field = "CONCAT('Q', EXTRACT(QUARTER FROM " + req.getTableId()+ "." + req.getFieldName() + ")::INTEGER) AS Quarter";
+                    String field = "CONCAT('Q', EXTRACT(QUARTER FROM " + selectField + ")::INTEGER) AS Quarter";
                     query = "SELECT DISTINCT " + field + fromClause + "ORDER BY 1";
                 } else if (req.getTimeGrain().name().equals("MONTH")) {
-                    String sortField = "EXTRACT(MONTH FROM " + req.getTableId()+ "."  + req.getFieldName()
+                    String sortField = "EXTRACT(MONTH FROM " + selectField
                             + ")::INTEGER";
-                    String field = "TRIM(TO_CHAR(" + req.getTableId()+ "."  + req.getFieldName() + ", 'Month'))";
+                    String field = "TRIM(TO_CHAR(" + selectField + ", 'Month'))";
                     query = "SELECT " + field + " AS Month" + fromClause + "GROUP BY " + sortField + ", " + field
                             + " ORDER BY " + sortField;
                 } else if (req.getTimeGrain().name().equals("YEARQUARTER")) {
-                    String field = "TO_CHAR(" + req.getTableId()+ "." + req.getFieldName()
-                            + ", 'YYYY') || '-Q' || TO_CHAR(" + req.getTableId()+ "."  + req.getFieldName() + ", 'Q')";
+                    String field = "TO_CHAR(" + selectField
+                            + ", 'YYYY') || '-Q' || TO_CHAR(" + selectField + ", 'Q')";
                     query = "SELECT DISTINCT " + field + " AS YearQuarter" + fromClause + "ORDER BY 1";
                 } else if (req.getTimeGrain().name().equals("YEARMONTH")) {
-                    String field = "TO_CHAR(" + req.getTableId()+ "." + req.getFieldName() + ", 'YYYY-MM')";
+                    String field = "TO_CHAR(" + selectField + ", 'YYYY-MM')";
                     query = "SELECT DISTINCT " + field + " AS YearMonth" + fromClause + "ORDER BY 1";
                 } else if (req.getTimeGrain().name().equals("DATE")) {
-                    String field = "DATE(" + req.getTableId()+ "." + req.getFieldName() + ")";
+                    String field = "DATE(" + selectField + ")";
                     query = "SELECT DISTINCT " + field + " AS Date" + fromClause + "ORDER BY 1";
                 }
                 // in postgres, dayofweek starts from 0. So we add +1 to be consistent across DB
                 else if (req.getTimeGrain().name().equals("DAYOFWEEK")) {
-                    String sortField = "EXTRACT(DOW FROM " + req.getTableId()+ "." + req.getFieldName()
+                    String sortField = "EXTRACT(DOW FROM " + selectField
                             + ")::INTEGER +1";
-                    String field = "TRIM(TO_CHAR(" + req.getTableId()+ "." + req.getFieldName() + ", 'Day'))";
+                    String field = "TRIM(TO_CHAR(" + selectField + ", 'Day'))";
                     query = "SELECT " + field + " AS DayOfWeek" + fromClause + "GROUP BY " + sortField + ", " + field
                             + " ORDER BY " + sortField;
                 } else if (req.getTimeGrain().name().equals("DAYOFMONTH")) {
-                    String field = "EXTRACT(DAY FROM " + req.getTableId()+ "." + req.getFieldName()
+                    String field = "EXTRACT(DAY FROM " + selectField
                             + ")::INTEGER AS DayOfMonth";
                     query = "SELECT DISTINCT " + field + fromClause + "ORDER BY 1";
                 }
@@ -118,22 +136,22 @@ public class FilterQueryPostgres {
              */
             else if (req.getFilterOption().name().equals("MIN_MAX")) {
                 if (req.getTimeGrain().name().equals("YEAR")) {
-                    String col = "EXTRACT(YEAR FROM " + req.getTableId()+ "."  + req.getFieldName() + ")::INTEGER";
+                    String col = "EXTRACT(YEAR FROM " + selectField + ")::INTEGER";
                     query = "SELECT MIN(" + col + ") AS min, MAX(" + col + ") AS max" + fromClause;
                 } else if (req.getTimeGrain().name().equals("QUARTER")) {
-                    String col = "EXTRACT(QUARTER FROM " + req.getTableId()+ "." + req.getFieldName() + ")::INTEGER";
+                    String col = "EXTRACT(QUARTER FROM " + selectField + ")::INTEGER";
                     query = "SELECT MIN(" + col + ") AS min, MAX(" + col + ") AS max" + fromClause;
                 } else if (req.getTimeGrain().name().equals("MONTH")) {
-                    String col = "EXTRACT(MONTH FROM " + req.getTableId()+ "." + req.getFieldName() + ")::INTEGER";
+                    String col = "EXTRACT(MONTH FROM " + selectField + ")::INTEGER";
                     query = "SELECT MIN(" + col + ") AS min, MAX(" + col + ") AS max" + fromClause;
                 } else if (req.getTimeGrain().name().equals("DATE")) {
-                    String col = "DATE(" + req.getTableId()+ "." + req.getFieldName() + ")";
+                    String col = "DATE(" + selectField + ")";
                     query = "SELECT MIN(" + col + ") AS min, MAX(" + col + ") AS max" + fromClause;
                 } else if (req.getTimeGrain().name().equals("DAYOFWEEK")) {
-                    String col = "EXTRACT(DOW FROM " + req.getTableId()+ "."  + req.getFieldName() + ")::INTEGER +1";
+                    String col = "EXTRACT(DOW FROM " + selectField + ")::INTEGER +1";
                     query = "SELECT MIN(" + col + ") AS min, MAX(" + col + ") AS max" + fromClause;
                 } else if (req.getTimeGrain().name().equals("DAYOFMONTH")) {
-                    String col = "EXTRACT(DAY FROM " + req.getTableId()+ "." + req.getFieldName() + ")::INTEGER";
+                    String col = "EXTRACT(DAY FROM " + selectField + ")::INTEGER";
                     query = "SELECT MIN(" + col + ") AS min, MAX(" + col + ") AS max" + fromClause;
                 }
             }

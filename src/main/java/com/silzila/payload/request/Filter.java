@@ -80,7 +80,7 @@ public class Filter implements Serializable {
      * @param operator
      * @param relativeCondition
      */
-    public Filter(Boolean isCalculatedField,CalculatedFieldRequest calculatedFieldName,String tableId, String tableName, String fieldName, Filter.DataType dataType, String uid, Boolean shouldExclude,
+    public Filter(Boolean isCalculatedField,CalculatedFieldRequest calculatedField,String tableId, String tableName, String fieldName, Filter.DataType dataType, String uid, Boolean shouldExclude,
             Filter.TimeGrain timeGrain, Filter.Operator operator, List<String> userSelection, String filterType,
             RelativeCondition relativeCondition, Boolean  isTillDate,Boolean isField) {
         super();
@@ -122,12 +122,12 @@ public class Filter implements Serializable {
     }
 
     @JsonProperty("calculatedField")
-    public CalculatedFieldRequest getCalculatedFieldName() {
+    public CalculatedFieldRequest getCalculatedField() {
         return calculatedField;
     }
 
     @JsonProperty("calculatedFieldName")
-    public void setCalculatedFieldName(CalculatedFieldRequest calculatedFieldName) {
+    public void setCalculatedField(CalculatedFieldRequest calculatedField) {
         this.calculatedField = calculatedField;
     }
 

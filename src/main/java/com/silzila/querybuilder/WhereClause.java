@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 import com.silzila.payload.request.Filter;
 import com.silzila.payload.request.FilterPanel;
 // import com.silzila.querybuilder.WhereClauseDatePostgres;
-import com.silzila.querybuilder.calculatedField.selectClause.PostgresSelectClass;
+import com.silzila.querybuilder.calculatedField.selectClause.PostgresCalculatedField;
 
 // to build where clause in Query construction
 public class WhereClause {
@@ -50,7 +50,7 @@ public class WhereClause {
                 Filter filter = filterPanels.get(i).getFilters().get(j);
                 // System.out.println("Filter =========== " + filter.toString());
 
-                String field = filter.getIsCalculatedField()?PostgresSelectClass.calculatedFieldComposed(filter.getCalculatedField()):filter.getTableId() + "." + filter.getFieldName();
+                String field = filter.getIsCalculatedField()?PostgresCalculatedField.calculatedFieldComposed(filter.getCalculatedField()):filter.getTableId() + "." + filter.getFieldName();
 
                 // check if Negative match or Positive match
                 String excludeSymbol = QueryNegator.makeNagateExpression(filter.getShouldExclude(),

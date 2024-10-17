@@ -5,17 +5,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.silzila.dto.DatasetDTO;
 import com.silzila.exception.BadRequestException;
+import com.silzila.helper.ColumnListFromClause;
 import com.silzila.payload.request.CalculatedFieldRequest;
 import com.silzila.payload.request.ConditionFilter;
 import com.silzila.payload.request.Field;
 import com.silzila.payload.request.Filter;
 import com.silzila.payload.request.Flow;
+import com.silzila.querybuilder.RelationshipClauseGeneric;
 import com.silzila.querybuilder.WhereClause;
 import com.silzila.querybuilder.calculatedField.ConditionFilterToFilter;
 import com.silzila.querybuilder.calculatedField.DateFlow.PostgresDateFlow;
 
-public class PostgresSelectClass {
+public class PostgresCalculatedField {
 
     private final Map<String, String> basicMathOperations = Map.of(
                 "addition", "+",
@@ -100,6 +103,28 @@ public class PostgresSelectClass {
 
         return calculatedField.append(" (").append(calculatedFieldComposed(calculatedFieldRequest))
         .append( ") AS ").append(calculatedFieldRequest.getCalculatedFieldName()).toString();
+    }
+
+    //composing a query to get sample records of calculated field
+    public static String composeSampleRecordQuery(CalculatedFieldRequest calculatedFieldRequest,DatasetDTO datasetDTO,Integer recordCount) throws BadRequestException{
+        StringBuilder query = new StringBuilder("SELECT \n\t");
+
+        // fixing a record count, if it is null or exceed 100
+        if (recordCount == null || recordCount > 100) {
+            recordCount = 100;
+        }
+
+        query.append(calculatedFieldComposedWithAlias(calculatedFieldRequest));
+
+        List<String> allColumnList = (calculatedFieldRequest!=null) 
+                                         ? ColumnListFromClause.getColumnListFromFields(calculatedFieldRequest.getFields()) 
+                                         : new ArrayList<>();
+        String fromClause = RelationshipClauseGeneric.buildRelationship(allColumnList,datasetDTO.getDataSchema(),"postgresql");
+
+        query.append("\nFROM ").append(fromClause) .append( "\nLIMIT ").append(recordCount);
+
+        return query.toString();
+        
     }
     
     // extract flow from condition filters

@@ -13,7 +13,7 @@ import com.silzila.helper.ColumnListFromClause;
 import com.silzila.payload.request.ColumnFilter;
 import com.silzila.payload.request.Table;
 import com.silzila.querybuilder.RelationshipClauseGeneric;
-import com.silzila.querybuilder.calculatedField.selectClause.PostgresSelectClass;
+import com.silzila.querybuilder.calculatedField.selectClause.PostgresCalculatedField;
 
 public class FilterQueryPostgres {
 
@@ -50,7 +50,7 @@ public class FilterQueryPostgres {
         }
         }
 
-        String selectField = req.getIsCalculatedField()? PostgresSelectClass.calculatedFieldComposed(req.getCalculatedField()) : req.getTableId()+ "."  + req.getFieldName();
+        String selectField = req.getIsCalculatedField()? PostgresCalculatedField.calculatedFieldComposed(req.getCalculatedField()) : req.getTableId()+ "."  + req.getFieldName();
 
         if (List.of("TEXT", "BOOLEAN").contains(req.getDataType().name())) {
             query = "SELECT DISTINCT " + selectField + fromClause + "ORDER BY 1";

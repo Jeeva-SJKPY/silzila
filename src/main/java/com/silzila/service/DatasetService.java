@@ -560,6 +560,22 @@ public class DatasetService {
 
     }
 
+
+    public JSONArray testCalculateField(String userId, String dbConnectionId, String datasetId,CalculatedFieldRequest calculatedFieldRequest,Integer recordCount) 
+    throws RecordNotFoundException, SQLException, JsonMappingException, JsonProcessingException, 
+    ClassNotFoundException, BadRequestException{
+
+        String vendorName = connectionPoolService.getVendorNameFromConnectionPool(dbConnectionId, userId);
+
+        DatasetDTO ds = loadDatasetInBuffer(dbConnectionId,datasetId, userId);
+
+        String query = calculatedFieldQueryComposer.composeSampleRecordQuery(calculatedFieldRequest, vendorName, ds,recordCount);
+
+        JSONArray jsonArray = connectionPoolService.runQuery(dbConnectionId, userId, query);
+
+        return jsonArray;
+    }
+
     //testing
     public String calculatedFiled(List<CalculatedFieldRequest> requests, String vendor){
         return  calculatedFieldQueryComposer.composeQuery(requests, vendor);

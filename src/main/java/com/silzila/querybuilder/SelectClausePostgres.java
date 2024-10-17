@@ -11,7 +11,7 @@ import com.silzila.helper.AilasMaker;
 import com.silzila.payload.request.Dimension;
 import com.silzila.payload.request.Measure;
 import com.silzila.payload.request.Query;
-import com.silzila.querybuilder.calculatedField.selectClause.PostgresSelectClass;
+import com.silzila.querybuilder.calculatedField.selectClause.PostgresCalculatedField;
 
 
 public class SelectClausePostgres {
@@ -63,7 +63,7 @@ public class SelectClausePostgres {
                
             }
             String field = "";
-            String selectField = dim.getIsCalculatedField()?PostgresSelectClass.calculatedFieldComposed(dim.getCalculatedField()):dim.getTableId() + "." + dim.getFieldName();
+            String selectField = dim.getIsCalculatedField()?PostgresCalculatedField.calculatedFieldComposed(dim.getCalculatedField()):dim.getTableId() + "." + dim.getFieldName();
             
 
             // for non Date fields, Keep column as is
@@ -169,7 +169,7 @@ public class SelectClausePostgres {
             // checking ('count', 'countnn', 'countn', 'countu')
             String field = "";
             String windowFn = "";
-            String selectField = meas.getIsCalculatedField()?PostgresSelectClass.calculatedFieldComposed(meas.getCalculatedField()):meas.getTableId() + "." + meas.getFieldName();
+            String selectField = meas.getIsCalculatedField()?PostgresCalculatedField.calculatedFieldComposed(meas.getCalculatedField()):meas.getTableId() + "." + meas.getFieldName();
             if (List.of("TEXT", "BOOLEAN").contains(meas.getDataType().name())) {
                 // checking ('count', 'countnn', 'countn', 'countu')
                 if (meas.getAggr().name().equals("COUNT")) {

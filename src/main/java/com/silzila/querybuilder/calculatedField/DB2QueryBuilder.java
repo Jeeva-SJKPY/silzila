@@ -13,4 +13,9 @@ public class DB2QueryBuilder implements QueryBuilder{
     public String build(List<CalculatedFieldRequest> requests) {
         return null;
     }
+
+    @Override
+    public String buildSampleRecordQuery(CalculatedFieldRequest request,DatasetDTO datasetDTO,Integer recordCount) {
+        return null;
+    }
 }

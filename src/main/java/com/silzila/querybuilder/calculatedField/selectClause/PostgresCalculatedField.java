@@ -8,6 +8,7 @@ import java.util.Map;
 import com.silzila.dto.DatasetDTO;
 import com.silzila.exception.BadRequestException;
 import com.silzila.helper.ColumnListFromClause;
+import com.silzila.helper.FieldNameProcessor;
 import com.silzila.payload.request.CalculatedFieldRequest;
 import com.silzila.payload.request.ConditionFilter;
 import com.silzila.payload.request.Field;
@@ -20,7 +21,7 @@ import com.silzila.querybuilder.calculatedField.DateFlow.PostgresDateFlow;
 
 public class PostgresCalculatedField {
 
-    private final Map<String, String> basicMathOperations = Map.of(
+    private final static Map<String, String> basicMathOperations = Map.of(
                 "addition", "+",
                 "subtraction", "-",
                 "multiplication", "*",
@@ -66,19 +67,6 @@ public class PostgresCalculatedField {
     
     public static String calculatedFieldComposed(CalculatedFieldRequest calculatedFieldRequest) {
 
-        Map<String, String> basicMathOperations = Map.of(
-                "addition", "+",
-                "subtraction", "-",
-                "multiplication", "*",
-                "division", "/",
-                "ceiling","CEIL",
-                "floor","FLOOR",
-                "absolute","ABS",
-                "power","POWER",
-                "min", "LEAST",
-                "max","GREATEST"
-        );
-
         StringBuilder calculatedField =  new StringBuilder();
     
         Map<String, Field> fields = calculatedFieldRequest.getFields();
@@ -92,7 +80,7 @@ public class PostgresCalculatedField {
 
         resolveFlowDependencies(flowMap, flowForConditionFilter);
         processConditionFilters(conditionFilterMap, fields, flowStringMap, conditionFilterStringMap);
-        processFlows(flowForConditionFilter, flowMap, fields, flowStringMap, conditionFilterStringMap, basicMathOperations);
+        processFlows(flowForConditionFilter, flowMap, fields, flowStringMap, conditionFilterStringMap);
     
         return calculatedField.append(flowStringMap.get("f1")).toString();
     }
@@ -101,8 +89,10 @@ public class PostgresCalculatedField {
 
         StringBuilder calculatedField = new StringBuilder();
 
+        String formattedAliasName = FieldNameProcessor.formatFieldName(calculatedFieldRequest.getCalculatedFieldName());
+
         return calculatedField.append(" (").append(calculatedFieldComposed(calculatedFieldRequest))
-        .append( ") AS ").append(calculatedFieldRequest.getCalculatedFieldName()).toString();
+        .append( ") AS ").append(formattedAliasName).toString();
     }
 
     //composing a query to get sample records of calculated field
@@ -110,7 +100,7 @@ public class PostgresCalculatedField {
         StringBuilder query = new StringBuilder("SELECT \n\t");
 
         // fixing a record count, if it is null or exceed 100
-        if (recordCount == null || recordCount > 100) {
+        if (recordCount == null || recordCount == 0|| recordCount > 100) {
             recordCount = 100;
         }
 
@@ -204,7 +194,7 @@ public class PostgresCalculatedField {
             if (firstFlow.getCondition() != null) {
                 processConditionalFlow(flows, flowStringMap, conditionFilterStringMap, fields, flowKey);
             } else if (basicMathOperations.containsKey(firstFlow.getFlow())) {
-                processNonConditionalMathFlow(firstFlow, fields, flowStringMap, flowKey, basicMathOperations);
+                processNonConditionalMathFlow(firstFlow, fields, flowStringMap, flowKey);
             }
             else{
 
@@ -216,8 +206,7 @@ public class PostgresCalculatedField {
                                      Map<String, List<Flow>> flowMap,
                                      Map<String, Field> fields,
                                      Map<String, String> flowStringMap,
-                                     Map<String, String> conditionFilterStringMap,
-                                     Map<String, String> basicMathOperations) {
+                                     Map<String, String> conditionFilterStringMap) {
     
         flowMap.forEach((flowKey,flows) -> {
             
@@ -226,7 +215,7 @@ public class PostgresCalculatedField {
             if (firstFlow.getCondition() != null) {
                 processConditionalFlow(flows, flowStringMap, conditionFilterStringMap, fields, flowKey);
             } else if (basicMathOperations.containsKey(firstFlow.getFlow())){
-                processNonConditionalMathFlow(firstFlow, fields, flowStringMap, flowKey, basicMathOperations);
+                processNonConditionalMathFlow(firstFlow, fields, flowStringMap, flowKey);
             }
             else if (basicTextOperations.containsKey(firstFlow.getFlow())){
                 processNonConditionalTextFlow(firstFlow, fields, flowStringMap, flowKey);
@@ -275,8 +264,7 @@ public class PostgresCalculatedField {
     private static void processNonConditionalMathFlow(Flow flow,
                                                   Map<String, Field> fields,
                                                   Map<String, String> flowStringMap,
-                                                  String flowKey,
-                                                  Map<String, String> basicMathOperations) {
+                                                  String flowKey) {
     List<String> result = new ArrayList<>();
     List<String> source = flow.getSource();
     List<String> sourceType = flow.getSourceType();
@@ -284,21 +272,20 @@ public class PostgresCalculatedField {
     
     if (basicMathOperations.containsKey(flowType)) {
         if (List.of("addition", "subtraction", "multiplication", "division").contains(flowType)) {
-            processMathBasicOperations(flow, fields, flowStringMap, basicMathOperations, result, flowKey, source, sourceType);
+            processMathBasicOperations(flow, fields, flowStringMap, result, flowKey, source, sourceType);
         } else if (List.of("ceiling", "floor", "absolute").contains(flowType)) {
-            processMathSingleArgumentOperations(flow, fields, flowStringMap, basicMathOperations, flowKey, source, sourceType);
+            processMathSingleArgumentOperations(flow, fields, flowStringMap, flowKey, source, sourceType);
         } else if (List.of("min", "max").contains(flowType)) {
-            processMultipleArgumentOperations(flow, fields, flowStringMap, basicMathOperations, flowKey, result, source, sourceType);
+            processMultipleArgumentOperations(flow, fields, flowStringMap, flowKey, result, source, sourceType);
         } else if ("power".equals(flowType)) {
-            processPowerOperation(flow, fields, flowStringMap, basicMathOperations, flowKey, source, sourceType);
+            processPowerOperation(flow, fields, flowStringMap, flowKey, source, sourceType);
         }
     }
 }
 
     // to process math basic operations - addition, subtraction, multiplicattion, division
     private static void processMathBasicOperations(Flow flow, Map<String, Field> fields, Map<String, String> flowStringMap,
-                                            Map<String, String> basicMathOperations, List<String> result,
-                                            String flowKey,List<String> source,List<String> sourceType) {
+                                             List<String> result,String flowKey,List<String> source,List<String> sourceType) {
         for (int i = 0; i < source.size(); i++) {
             String processedSource = getMathProcessedSource(source.get(i), sourceType.get(i), fields, flowStringMap, flow, i);
             result.add(processedSource);
@@ -311,16 +298,14 @@ public class PostgresCalculatedField {
 
     // to procees math single argument operations - absolute,ceiling,floor
     private static void processMathSingleArgumentOperations(Flow flow, Map<String, Field> fields, Map<String, String> flowStringMap,
-                                                        Map<String, String> basicMathOperations, String flowKey,
-                                                        List<String> source, List<String> sourceType) {
+                                                         String flowKey,List<String> source, List<String> sourceType) {
         String processedSource = getMathProcessedSource(source.get(0), sourceType.get(0), fields, flowStringMap, flow, 0);
         flowStringMap.put(flowKey, basicMathOperations.get(flow.getFlow()) + "(" + processedSource + ")");
     }
 
     // to procees math multiple argument operations - minimum and maximum
     private static void processMultipleArgumentOperations(Flow flow, Map<String, Field> fields, Map<String, String> flowStringMap,
-                                                        Map<String, String> basicMathOperations, String flowKey,
-                                                        List<String> result, List<String> source, List<String> sourceType) {
+                                                         String flowKey,List<String> result, List<String> source, List<String> sourceType) {
         for (int i = 0; i < source.size(); i++) {
             String processedSource = getMathProcessedSource(source.get(i), sourceType.get(i), fields, flowStringMap, flow, i);
             result.add(processedSource);
@@ -334,8 +319,7 @@ public class PostgresCalculatedField {
     // To process the power operation
     // 1st source - base value, 2nd source - exponent value
     private static void processPowerOperation(Flow flow, Map<String, Field> fields, Map<String, String> flowStringMap,
-                                            Map<String, String> basicMathOperations, String flowKey,
-                                            List<String> source, List<String> sourceType) {
+                                             String flowKey,List<String> source, List<String> sourceType) {
         String processedSource = getMathProcessedSource(source.get(0), sourceType.get(0), fields, flowStringMap, flow, 0);
         flowStringMap.put(flowKey, basicMathOperations.get(flow.getFlow()) + "(" + processedSource + "," + source.get(1) + ")");
     }

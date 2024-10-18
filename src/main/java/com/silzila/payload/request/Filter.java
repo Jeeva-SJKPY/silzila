@@ -32,7 +32,7 @@ public class Filter implements Serializable {
     @JsonProperty("filterType")
     private String filterType = null;
     @JsonProperty("isCalculatedField")
-    private Boolean isCalculatedField;
+    private Boolean isCalculatedField = false;
     @JsonProperty("calculatedField")
     private CalculatedFieldRequest calculatedField;
     @JsonProperty("tableId")

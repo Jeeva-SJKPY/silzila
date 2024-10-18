@@ -26,7 +26,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public class Dimension implements Serializable {
 
     @JsonProperty("isCalculatedField")
-    private Boolean isCalculatedField;
+    private Boolean isCalculatedField = false;
     @JsonProperty("calculatedField")
     private CalculatedFieldRequest calculatedField;
     @JsonProperty("tableId")

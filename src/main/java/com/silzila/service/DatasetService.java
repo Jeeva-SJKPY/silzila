@@ -571,6 +571,8 @@ public class DatasetService {
 
         String query = calculatedFieldQueryComposer.composeSampleRecordQuery(calculatedFieldRequest, vendorName, ds,recordCount);
 
+        logger.info("\n******* QUERY **********\n" + query);
+
         JSONArray jsonArray = connectionPoolService.runQuery(dbConnectionId, userId, query);
 
         return jsonArray;

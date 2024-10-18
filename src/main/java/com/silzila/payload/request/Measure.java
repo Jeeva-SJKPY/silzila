@@ -34,7 +34,7 @@ import lombok.Builder;
 public class Measure implements Serializable {
 
     @JsonProperty("isCalculatedField")
-    private Boolean isCalculatedField;
+    private Boolean isCalculatedField = false;
     @JsonProperty("calculatedField")
     private CalculatedFieldRequest calculatedField;
     @JsonProperty("tableId")

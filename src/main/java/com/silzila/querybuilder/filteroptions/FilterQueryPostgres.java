@@ -51,6 +51,15 @@ public class FilterQueryPostgres {
         }
 
         String selectField = req.getIsCalculatedField()? PostgresCalculatedField.calculatedFieldComposed(req.getCalculatedField()) : req.getTableId()+ "."  + req.getFieldName();
+        if (req.getIsCalculatedField()) {
+                req.setDataType(ColumnFilter.DataType.fromValue(
+                    PostgresCalculatedField.getDataType(
+                        req.getCalculatedField().getFlows(), 
+                        req.getCalculatedField().getFields(), 
+                        req.getCalculatedField().getFlows().get("f1").get(0)
+                    )
+                ));
+            }
 
         if (List.of("TEXT", "BOOLEAN").contains(req.getDataType().name())) {
             query = "SELECT DISTINCT " + selectField + fromClause + "ORDER BY 1";

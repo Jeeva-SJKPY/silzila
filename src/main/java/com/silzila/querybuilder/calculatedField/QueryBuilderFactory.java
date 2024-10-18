@@ -6,9 +6,10 @@ public class QueryBuilderFactory {
         switch(vendor){
             case "DB2":
                 return new DB2QueryBuilder();
-
-            case "postgresql":
+                case "postgresql":
                 return new PostgresSQLQueryBuilder();
+            case "mysql":
+                return new MySQLQueryBuilder();
         }
 
         return null ;

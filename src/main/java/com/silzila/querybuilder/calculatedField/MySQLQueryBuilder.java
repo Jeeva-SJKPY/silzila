@@ -3,20 +3,21 @@ package com.silzila.querybuilder.calculatedField;
 import java.util.List;
 
 import com.silzila.dto.DatasetDTO;
+import com.silzila.exception.BadRequestException;
 import com.silzila.payload.request.CalculatedFieldRequest;
+import com.silzila.querybuilder.calculatedField.selectClause.MySQLCalculatedField;
+import com.silzila.querybuilder.calculatedField.selectClause.PostgresCalculatedField;
 
 public class MySQLQueryBuilder implements QueryBuilder{
-    
-    private String queryString = "";
     
     
     @Override
     public String build(List<CalculatedFieldRequest> requests) {
-        return null;
+        return MySQLCalculatedField.calculatedFieldsComposed(requests);
     }
 
     @Override
-    public String buildSampleRecordQuery(CalculatedFieldRequest request,DatasetDTO datasetDTO,Integer recordCount) {
-        return null;
+    public String buildSampleRecordQuery(CalculatedFieldRequest request,DatasetDTO datasetDTO,Integer recordCount) throws BadRequestException {
+        return MySQLCalculatedField.composeSampleRecordQuery(request, datasetDTO,recordCount);
     }
 }

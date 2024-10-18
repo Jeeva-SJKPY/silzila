@@ -27,6 +27,7 @@ public class WhereClauseDatePostgres {
             filter.setShouldExclude(false);
         }
 
+        String whereField = filter.getIsCalculatedField()? filter.getFieldName() : filter.getTableId() + "." + filter.getFieldName();
 
         /*
          * EXACT MATCH - Can be single match or multiple matches
@@ -39,24 +40,24 @@ public class WhereClauseDatePostgres {
             if (filter.getOperator().name().equals("IN")) {
 
                 if (filter.getTimeGrain().name().equals("YEAR")) {
-                    field = "EXTRACT(YEAR FROM " + filter.getTableId() + "." + filter.getFieldName() + ")::INTEGER";
+                    field = "EXTRACT(YEAR FROM " + whereField + ")::INTEGER";
                 } else if (filter.getTimeGrain().name().equals("QUARTER")) {
-                    field = "CONCAT('Q', EXTRACT(QUARTER FROM " + filter.getTableId() + "." + filter.getFieldName()
+                    field = "CONCAT('Q', EXTRACT(QUARTER FROM " + whereField
                             + ")::INTEGER)";
                 } else if (filter.getTimeGrain().name().equals("MONTH")) {
-                    field = "TRIM(TO_CHAR(" + filter.getTableId() + "." + filter.getFieldName() + ", 'Month'))";
+                    field = "TRIM(TO_CHAR(" + whereField + ", 'Month'))";
                 } else if (filter.getTimeGrain().name().equals("YEARQUARTER")) {
-                    field = "TO_CHAR(" + filter.getTableId() + "." + filter.getFieldName()
+                    field = "TO_CHAR(" + whereField
                             + ", 'YYYY') || '-Q' || TO_CHAR(" + filter.getTableId() + "."
                             + filter.getFieldName() + ", 'Q'))";
                 } else if (filter.getTimeGrain().name().equals("YEARMONTH")) {
-                    field = "TO_CHAR(" + filter.getTableId() + "." + filter.getFieldName() + ", 'YYYY-MM')";
+                    field = "TO_CHAR(" + whereField + ", 'YYYY-MM')";
                 } else if (filter.getTimeGrain().name().equals("DATE")) {
-                    field = "DATE(" + filter.getTableId() + "." + filter.getFieldName() + ")";
+                    field = "DATE(" + whereField + ")";
                 } else if (filter.getTimeGrain().name().equals("DAYOFWEEK")) {
-                    field = "TRIM(TO_CHAR(" + filter.getTableId() + "." + filter.getFieldName() + ", 'Day'))";
+                    field = "TRIM(TO_CHAR(" + whereField + ", 'Day'))";
                 } else if (filter.getTimeGrain().name().equals("DAYOFMONTH")) {
-                    field = "EXTRACT(DAY FROM " + filter.getTableId() + "." + filter.getFieldName() + ")::INTEGER";
+                    field = "EXTRACT(DAY FROM " + whereField + ")::INTEGER";
                 }
 
                 String nullCondition = NullClauseGenerator.generateNullCheckQuery(filter, excludeOperator);
@@ -75,18 +76,18 @@ public class WhereClauseDatePostgres {
                 }
                 // Allowable Time Grains
                 if (filter.getTimeGrain().name().equals("YEAR")) {
-                    field = "EXTRACT(YEAR FROM " + filter.getTableId() + "." + filter.getFieldName() + ")::INTEGER";
+                    field = "EXTRACT(YEAR FROM " + whereField + ")::INTEGER";
                 } else if (filter.getTimeGrain().name().equals("QUARTER")) {
-                    field = "EXTRACT(QUARTER FROM " + filter.getTableId() + "." + filter.getFieldName() + ")::INTEGER";
+                    field = "EXTRACT(QUARTER FROM " + whereField + ")::INTEGER";
                 } else if (filter.getTimeGrain().name().equals("MONTH")) {
-                    field = "EXTRACT(MONTH FROM " + filter.getTableId() + "." + filter.getFieldName() + ")::INTEGER";
+                    field = "EXTRACT(MONTH FROM " + whereField + ")::INTEGER";
                 } else if (filter.getTimeGrain().name().equals("DATE")) {
-                    field = "DATE(" + filter.getTableId() + "." + filter.getFieldName() + ")";
+                    field = "DATE(" + whereField + ")";
                 } else if (filter.getTimeGrain().name().equals("DAYOFWEEK")) {
                     // in postgres, day of week starts at 0, to offset +1 is added
-                    field = "EXTRACT(DOW FROM " + filter.getTableId() + "." + filter.getFieldName() + ")::INTEGER +1";
+                    field = "EXTRACT(DOW FROM " + whereField + ")::INTEGER +1";
                 } else if (filter.getTimeGrain().name().equals("DAYOFMONTH")) {
-                    field = "EXTRACT(DAY FROM " + filter.getTableId() + "." + filter.getFieldName() + ")::INTEGER";
+                    field = "EXTRACT(DAY FROM " + whereField + ")::INTEGER";
                 }
                 where = field + excludeOperator + "= '" + filter.getUserSelection().get(0) + "'";
             }
@@ -110,11 +111,11 @@ public class WhereClauseDatePostgres {
                 field = "EXTRACT(" + timeGrainMap.get(filter.getTimeGrain().name()) + " FROM " + filter.getTableId()
                         + "." + filter.getFieldName() + ")::INTEGER";
             } else if (filter.getTimeGrain().name().equals("DATE")) {
-                field = "DATE(" + filter.getTableId() + "." + filter.getFieldName() + ")";
+                field = "DATE(" + whereField + ")";
             }
             // In postgres, dayofweek starts at 0 not 1, so need to add 1 to the function
             else if (filter.getTimeGrain().name().equals("DAYOFWEEK")) {
-                field = "EXTRACT(DOW FROM " + filter.getTableId() + "." + filter.getFieldName() + ")::INTEGER +1";
+                field = "EXTRACT(DOW FROM " + whereField + ")::INTEGER +1";
             }
             // decides if it is '=' or '!='
             String excludeOperator = QueryNegator.makeNegateCondition(filter.getShouldExclude());

@@ -16,6 +16,11 @@ public class PostgresSQLQueryBuilder implements QueryBuilder{
     }
 
     @Override
+    public String build(CalculatedFieldRequest request) {
+        return PostgresCalculatedField.calculatedFieldComposed(request);
+    }
+
+    @Override
     public String buildSampleRecordQuery(CalculatedFieldRequest request,DatasetDTO datasetDTO,Integer recordCount) throws BadRequestException{
         return PostgresCalculatedField.composeSampleRecordQuery(request, datasetDTO,recordCount);
     }

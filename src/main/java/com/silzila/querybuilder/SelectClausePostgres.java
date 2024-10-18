@@ -63,8 +63,18 @@ public class SelectClausePostgres {
                
             }
             String field = "";
+
+            // 
             String selectField = dim.getIsCalculatedField()?PostgresCalculatedField.calculatedFieldComposed(dim.getCalculatedField()):dim.getTableId() + "." + dim.getFieldName();
-            
+            if (dim.getIsCalculatedField()) {
+                dim.setDataType(Dimension.DataType.fromValue(
+                    PostgresCalculatedField.getDataType(
+                        dim.getCalculatedField().getFlows(), 
+                        dim.getCalculatedField().getFields(), 
+                        dim.getCalculatedField().getFlows().get("f1").get(0)
+                    )
+                ));
+            }
 
             // for non Date fields, Keep column as is
             if (List.of("TEXT", "BOOLEAN", "INTEGER", "DECIMAL").contains(dim.getDataType().name())) {
@@ -169,7 +179,17 @@ public class SelectClausePostgres {
             // checking ('count', 'countnn', 'countn', 'countu')
             String field = "";
             String windowFn = "";
+            //
             String selectField = meas.getIsCalculatedField()?PostgresCalculatedField.calculatedFieldComposed(meas.getCalculatedField()):meas.getTableId() + "." + meas.getFieldName();
+            if (meas.getIsCalculatedField()) {
+                meas.setDataType(Measure.DataType.fromValue(
+                    PostgresCalculatedField.getDataType(
+                        meas.getCalculatedField().getFlows(), 
+                        meas.getCalculatedField().getFields(), 
+                        meas.getCalculatedField().getFlows().get("f1").get(0)
+                    )
+                ));
+            }
             if (List.of("TEXT", "BOOLEAN").contains(meas.getDataType().name())) {
                 // checking ('count', 'countnn', 'countn', 'countu')
                 if (meas.getAggr().name().equals("COUNT")) {

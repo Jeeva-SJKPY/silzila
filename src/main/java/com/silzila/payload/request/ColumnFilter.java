@@ -27,7 +27,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public class ColumnFilter implements Serializable {
 
     @JsonProperty("isCalculatedField")
-    private Boolean isCalculatedField;
+    private Boolean isCalculatedField = false;
     @JsonProperty("calculatedField")
     private CalculatedFieldRequest calculatedField;
     @JsonProperty("tableId")

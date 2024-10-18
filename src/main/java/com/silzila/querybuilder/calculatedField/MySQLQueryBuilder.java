@@ -18,6 +18,11 @@ public class MySQLQueryBuilder implements QueryBuilder{
 
     @Override
     public String buildSampleRecordQuery(CalculatedFieldRequest request,DatasetDTO datasetDTO,Integer recordCount) throws BadRequestException {
-        return MySQLCalculatedField.composeSampleRecordQuery(request, datasetDTO,recordCount);
+        return MySQLCalculatedField.composeSampleRecordQuery(request, datasetDTO, recordCount);
+
+    }
+
+    public String build(CalculatedFieldRequest request) {
+        return null;
     }
 }

@@ -25,4 +25,11 @@ public class CalculatedFieldQueryComposer {
 
         return queryBuilder.buildSampleRecordQuery(request,datasetDTO,recordCount);
     }
+
+    public String composeQuery(CalculatedFieldRequest calculatedFieldRequest, String vendor){
+
+        QueryBuilder queryBuilder = QueryBuilderFactory.getQueryBuilder(vendor);
+
+        return queryBuilder.build(calculatedFieldRequest);
+    }
 }

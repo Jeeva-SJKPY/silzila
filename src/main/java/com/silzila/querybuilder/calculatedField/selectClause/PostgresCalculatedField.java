@@ -78,11 +78,16 @@ public class PostgresCalculatedField {
         Map<String, String> flowStringMap = new HashMap<>();
         List<String> flowForConditionFilter = extractFlowForConditionFilters(conditionFilterMap);
 
+        String flowKey = "";
+        for (String key : flowMap.keySet()) {
+            flowKey = key;  
+        }
+
         resolveFlowDependencies(flowMap, flowForConditionFilter);
         processConditionFilters(conditionFilterMap, fields, flowStringMap, conditionFilterStringMap);
         processFlows(flowForConditionFilter, flowMap, fields, flowStringMap, conditionFilterStringMap);
     
-        return calculatedField.append(flowStringMap.get("f1")).toString();
+        return calculatedField.append(flowStringMap.get(flowKey)).toString();
     }
 
     public static String calculatedFieldComposedWithAlias(CalculatedFieldRequest calculatedFieldRequest){

@@ -52,11 +52,15 @@ public class FilterQueryPostgres {
 
         String selectField = req.getIsCalculatedField()? PostgresCalculatedField.calculatedFieldComposed(req.getCalculatedField()) : req.getTableId()+ "."  + req.getFieldName();
         if (req.getIsCalculatedField()) {
+                String flowKey = "";
+                for (String key : req.getCalculatedField().getFlows().keySet()) {
+                    flowKey = key;  
+                }
                 req.setDataType(ColumnFilter.DataType.fromValue(
                     PostgresCalculatedField.getDataType(
                         req.getCalculatedField().getFlows(), 
                         req.getCalculatedField().getFields(), 
-                        req.getCalculatedField().getFlows().get("f1").get(0)
+                        req.getCalculatedField().getFlows().get(flowKey).get(0)
                     )
                 ));
             }

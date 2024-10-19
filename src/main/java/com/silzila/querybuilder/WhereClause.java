@@ -77,11 +77,15 @@ public class WhereClause {
                                 ? filter.getTableId() + "." + filter.getFieldName() 
                                 : filter.getFieldName());
             if (filter.getIsCalculatedField()) {
+                String flowKey = "";
+                for (String key : filter.getCalculatedField().getFlows().keySet()) {
+                    flowKey = key;  
+                }
                 filter.setDataType(Filter.DataType.fromValue(
                     PostgresCalculatedField.getDataType(
                         filter.getCalculatedField().getFlows(), 
                         filter.getCalculatedField().getFields(), 
-                        filter.getCalculatedField().getFlows().get("f1").get(0)
+                        filter.getCalculatedField().getFlows().get(flowKey).get(0)
                     )
                 ));
             }

@@ -67,11 +67,15 @@ public class SelectClausePostgres {
             // 
             String selectField = dim.getIsCalculatedField()?PostgresCalculatedField.calculatedFieldComposed(dim.getCalculatedField()):dim.getTableId() + "." + dim.getFieldName();
             if (dim.getIsCalculatedField()) {
+                String flowKey = "";
+                for (String key : dim.getCalculatedField().getFlows().keySet()) {
+                    flowKey = key;  
+                }
                 dim.setDataType(Dimension.DataType.fromValue(
                     PostgresCalculatedField.getDataType(
                         dim.getCalculatedField().getFlows(), 
                         dim.getCalculatedField().getFields(), 
-                        dim.getCalculatedField().getFlows().get("f1").get(0)
+                        dim.getCalculatedField().getFlows().get(flowKey).get(0)
                     )
                 ));
             }
@@ -182,11 +186,15 @@ public class SelectClausePostgres {
             //
             String selectField = meas.getIsCalculatedField()?PostgresCalculatedField.calculatedFieldComposed(meas.getCalculatedField()):meas.getTableId() + "." + meas.getFieldName();
             if (meas.getIsCalculatedField()) {
+                String flowKey = "";
+                for (String key : meas.getCalculatedField().getFlows().keySet()) {
+                    flowKey = key;  
+                }
                 meas.setDataType(Measure.DataType.fromValue(
                     PostgresCalculatedField.getDataType(
                         meas.getCalculatedField().getFlows(), 
                         meas.getCalculatedField().getFields(), 
-                        meas.getCalculatedField().getFlows().get("f1").get(0)
+                        meas.getCalculatedField().getFlows().get(flowKey).get(0)
                     )
                 ));
             }

@@ -223,6 +223,23 @@ public class DBConnectionController {
         return ResponseEntity.status(HttpStatus.OK).body(jsonArray.toString());
     }
 
+    @GetMapping("/sample-records-calculatedField")
+    public ResponseEntity<?> getSampleRecordsCalculatedField(@RequestHeader Map<String, String> reqHeader,
+                                              @RequestParam(value = "databaseId") String databaseId,
+                                              @RequestParam(value = "datasetId" , required = false)  String datasetId,
+                                              @RequestParam(value = "recordCount") Integer recordCount,
+                                              @RequestParam(name = "database", required = false) String databaseName,
+                                              @RequestParam(name = "schema", required = false) String schemaName,
+                                              @RequestParam(name = "table") String tableName,
+                                              @RequestParam(name = "tableId",required = false) String tableId,
+                                              @RequestBody(required = false) List<CalculatedFieldRequest> calculatedFieldRequest)
+            throws RecordNotFoundException, SQLException, BadRequestException, JsonProcessingException, ClassNotFoundException {
+        String userId = reqHeader.get("username");
+        JSONArray jsonArray = connectionPoolService.getSampleRecordsCalculatedField(databaseId,datasetId, userId, databaseName,
+                schemaName, tableName, recordCount,tableId,calculatedFieldRequest);
+        return ResponseEntity.status(HttpStatus.OK).body(jsonArray.toString());
+    }
+
     @PostMapping("/sample-records-customquery/{databaseId}/{recordCount}")
     public ResponseEntity<?> getSampleRecordsCustomQuery(@RequestHeader Map<String, String> reqHeader,
                                                          @PathVariable(value = "databaseId") String databaseId,

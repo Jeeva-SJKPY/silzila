@@ -10,6 +10,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
+import com.silzila.querybuilder.calculatedField.selectClause.MySQLCalculatedField;
+import com.silzila.querybuilder.calculatedField.selectClause.PostgresCalculatedField;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.silzila.payload.internals.QueryClauseFieldListMap;
@@ -76,7 +78,17 @@ public class SelectClauseMysql {
                
             }
             String field = "";
-    
+
+            String selectField = dim.getIsCalculatedField()? MySQLCalculatedField.calculatedFieldComposed(dim.getCalculatedField()):dim.getTableId() + "." + dim.getFieldName();
+            if (dim.getIsCalculatedField()) {
+                dim.setDataType(Dimension.DataType.fromValue(
+                        MySQLCalculatedField.getDataType(
+                                dim.getCalculatedField().getFlows(),
+                                dim.getCalculatedField().getFields(),
+                                dim.getCalculatedField().getFlows().get("f1").get(0)
+                        )
+                ));
+            }
             // for non Date fields, Keep column as is
             if (List.of("TEXT", "BOOLEAN", "INTEGER", "DECIMAL").contains(dim.getDataType().name())) {
                 field = dim.getTableId() + "." + dim.getFieldName();
@@ -177,6 +189,18 @@ public class SelectClauseMysql {
             // checking ('count', 'countnn', 'countn', 'countu')
             String field = "";
             String windowFn = "";
+
+            String selectField = meas.getIsCalculatedField()? MySQLCalculatedField.calculatedFieldComposed(meas.getCalculatedField()):meas.getTableId() + "." + meas.getFieldName();
+            if (meas.getIsCalculatedField()) {
+                meas.setDataType(Measure.DataType.fromValue(
+                        MySQLCalculatedField.getDataType(
+                                meas.getCalculatedField().getFlows(),
+                                meas.getCalculatedField().getFields(),
+                                meas.getCalculatedField().getFlows().get("f1").get(0)
+                        )
+                ));
+            }
+
             if (List.of("TEXT", "BOOLEAN").contains(meas.getDataType().name())) {
                 // checking ('count', 'countnn', 'countn', 'countu')
                 if (meas.getAggr().name().equals("COUNT")) {

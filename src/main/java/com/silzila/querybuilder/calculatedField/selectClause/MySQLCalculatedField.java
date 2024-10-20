@@ -444,6 +444,49 @@ public class MySQLCalculatedField {
             String dateFlow = MySQLDateflow.mySQLDateFlow(firstFlow,fields,flowStringMap,flowKey);
             flowStringMap.put(flowKey, dateFlow);
         }
+
+    public static String getDataType(Map<String, List<Flow>> flows, Map<String, Field> fields, Flow firstFlow) {
+        String flowType = firstFlow.getFlow();
+
+        if ("if".equals(firstFlow.getCondition())) {
+            String result = conditionFlowDateType(flows, fields, firstFlow);
+            if (result != null) {
+                return result;
+            }
+        }
+
+        if (basicMathOperations.containsKey(flowType)
+                || List.of("dateInterval", "datePartNumber").contains(flowType)
+                || firstFlow.getIsAggregation()) {
+            return "integer";
+        } else if (basicTextOperations.containsKey(flowType)
+                || List.of("datePartName").contains(flowType)) {
+            return "text";
+        } else if ("currentTimeStamp".equals(flowType)) {
+            return "timestamp";
+        } else {
+            return "date";
+        }
+    }
+
+    private static String conditionFlowDateType(Map<String, List<Flow>> flows, Map<String, Field> fields, Flow firstFlow) {
+        String sourceType = firstFlow.getSourceType().get(0);
+
+        if ("field".equals(sourceType)) {
+            Field field = fields.get(firstFlow.getSource().get(0));
+            return (field != null) ? field.getDataType().toString() : "unknown";
+        } else if ("flow".equals(sourceType)) {
+            String flowSourceId = firstFlow.getSource().get(0);
+            List<Flow> sourceFlows = flows.get(flowSourceId);
+
+            if (sourceFlows != null && !sourceFlows.isEmpty()) {
+                return getDataType(flows, fields, sourceFlows.get(0));
+            }
+            return "unknown";
+        }
+
+        return null;
+    }
     }
 
 

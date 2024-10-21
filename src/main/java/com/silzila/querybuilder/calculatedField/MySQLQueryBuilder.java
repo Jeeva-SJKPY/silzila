@@ -6,7 +6,7 @@ import com.silzila.dto.DatasetDTO;
 import com.silzila.exception.BadRequestException;
 import com.silzila.payload.request.CalculatedFieldRequest;
 import com.silzila.querybuilder.calculatedField.selectClause.MySQLCalculatedField;
-import com.silzila.querybuilder.calculatedField.selectClause.PostgresCalculatedField;
+
 
 public class MySQLQueryBuilder implements QueryBuilder{
     
@@ -23,6 +23,6 @@ public class MySQLQueryBuilder implements QueryBuilder{
     }
 
     public String build(CalculatedFieldRequest request) {
-        return null;
+        return MySQLCalculatedField.calculatedFieldComposed(request);
     }
 }

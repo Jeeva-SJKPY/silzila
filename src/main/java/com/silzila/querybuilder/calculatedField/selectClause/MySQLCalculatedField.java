@@ -30,23 +30,23 @@ public class MySQLCalculatedField {
                 "floor","FLOOR",
                 "absolute","ABS",
                 "power","POWER",
-                "min", "LEAST",
-                "max","GREATEST"
+                "min", "MIN",
+                "max","MAX"
         );
 
         private final static Map<String, String> basicTextOperations = Map.ofEntries(
                 Map.entry("concat", "CONCAT"),
-                Map.entry("propercase", "INITCAP"),
+               // Map.entry("propercase", "INITCAP"),
                 Map.entry("lowercase", "LOWER"),
                 Map.entry("uppercase", "UPPER"),
                 Map.entry("trim", "TRIM"),
                 Map.entry("ltrim", "LTRIM"),
                 Map.entry("rtrim", "RTRIM"),
-                Map.entry("length", "LENGTH"),
-                Map.entry("substringright", "RIGHT"),
-                Map.entry("substringleft", "LEFT"),
+                Map.entry("length", "CHAR_LENGTH"),
+               // Map.entry("substringright", "RIGHT"),
+               // Map.entry("substringleft", "SUBSTRING"),
                 Map.entry("replace", "REPLACE"),
-                Map.entry("split", "SPLIT_PART")
+                Map.entry("split", "SUBSTRING_INDEX")
         );
 
         public static String calculatedFieldsComposed(List<CalculatedFieldRequest> calculatedFieldRequests) {
@@ -381,11 +381,34 @@ public class MySQLCalculatedField {
         //1st source - String to extract from, 2nd source - number of chars to extract
         private static String processSubStringOperations(Flow flow,String flowType,List<String> processedSources){
             StringBuilder result = new StringBuilder();
-            result.append(basicTextOperations.get(flowType)).append(" (")
-                    .append(processedSources.get(0))
-                    .append(", ")
-                    .append(flow.getSource().get(1))
-                    .append(")");
+            if(flowType.equals("propercase")){
+                result.append("CONCAT(UPPER(SUBSTRING(")
+                        .append(processedSources.get(0))
+                        .append(", 1, 1)), LOWER(SUBSTRING(")
+                        .append(processedSources.get(0))
+                        .append(", 2)))");
+            }
+            else if(flowType.equals("substringright")){
+                result.append("SUBSTRING(").append(processedSources.get(0))
+                        .append(", CHAR_LENGTH(").append(processedSources.get(0))
+                        .append(") -").append(flow.getSource().get(1))
+                        .append("+ 1)");
+
+            } else if (flowType.equals("substringleft")) {
+                result.append("SUBSTRING(")
+                        .append(processedSources.get(0))
+                        .append(", 1, ")
+                        .append(flow.getSource().get(1))
+                        .append(")");
+
+            }
+            else {
+                result.append(basicTextOperations.get(flowType)).append(" (")
+                        .append(processedSources.get(0))
+                        .append(", ")
+                        .append(flow.getSource().get(1))
+                        .append(")");
+            }
             return result.toString();
         }
 

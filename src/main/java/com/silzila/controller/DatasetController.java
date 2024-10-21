@@ -118,6 +118,7 @@ public class DatasetController {
             throws RecordNotFoundException, SQLException, JsonMappingException, JsonProcessingException,
             BadRequestException, ClassNotFoundException {
         String userId = reqHeader.get("username");
+        System.out.println(columnFilter);
         Object jsonArrayOrJsonNodeList = datasetService.filterOptions(userId, dBConnectionId, datasetId, columnFilter);
         return ResponseEntity.status(HttpStatus.OK).body(jsonArrayOrJsonNodeList.toString());
 

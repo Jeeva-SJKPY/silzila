@@ -58,8 +58,8 @@ public class FilterQueryPostgres {
                 }
                 req.setDataType(ColumnFilter.DataType.fromValue(
                     PostgresCalculatedField.getDataType(
-                        req.getCalculatedField().getFlows(), 
-                        req.getCalculatedField().getFields(), 
+                        req.getCalculatedField().getFlows(),
+                        req.getCalculatedField().getFields(),
                         req.getCalculatedField().getFlows().get(flowKey).get(0)
                     )
                 ));

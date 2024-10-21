@@ -91,7 +91,7 @@ public class SelectClauseMysql {
             }
             // for non Date fields, Keep column as is
             if (List.of("TEXT", "BOOLEAN", "INTEGER", "DECIMAL").contains(dim.getDataType().name())) {
-                field = dim.getTableId() + "." + dim.getFieldName();
+                field = selectField;
                 groupByDimList.add(field);
                 orderByDimList.add(field);
             }
@@ -106,13 +106,13 @@ public class SelectClauseMysql {
                 // 'dayofweek', 'date', 'dayofmonth')
                 // year -> 2015
                 if (dim.getTimeGrain().name().equals("YEAR")) {
-                    field = "YEAR(" + dim.getTableId() + "." + dim.getFieldName() + ")";
+                    field = "YEAR("+selectField+ ")";
                     groupByDimList.add(field);
                     orderByDimList.add(field);
                 }
                 // quarter name -> Q3
                 else if (dim.getTimeGrain().name().equals("QUARTER")) {
-                    field = "CONCAT('Q', QUARTER(" + dim.getTableId() + "." + dim.getFieldName() + "))";
+                    field = "CONCAT('Q', QUARTER(" + selectField + "))";
                     groupByDimList.add(field);
                     orderByDimList.add(field);
                 }
@@ -120,7 +120,7 @@ public class SelectClauseMysql {
                 // for month, need to give month number also for column sorting
                 // which should be available in group by list but not in select list
                 else if (dim.getTimeGrain().name().equals("MONTH")) {
-                    String sortingFfield = "MONTH(" + dim.getTableId() + "." + dim.getFieldName() + ")";
+                    String sortingFfield = "MONTH(" + selectField + ")";
                     field = "MONTHNAME(" + dim.getTableId() + "." + dim.getFieldName() + ")";
                     groupByDimList.add(sortingFfield);
                     groupByDimList.add(field);
@@ -128,20 +128,20 @@ public class SelectClauseMysql {
                 }
                 // yearquarter name -> 2015-Q3
                 else if (dim.getTimeGrain().name().equals("YEARQUARTER")) {
-                    field = "CONCAT(YEAR(" + dim.getTableId() + "." + dim.getFieldName()
+                    field = "CONCAT(YEAR(" + selectField
                             + "), '-Q', QUARTER(" + dim.getTableId() + "." + dim.getFieldName() + "))";
                     groupByDimList.add(field);
                     orderByDimList.add(field);
                 }
                 // yearmonth name -> 2015-08
                 else if (dim.getTimeGrain().name().equals("YEARMONTH")) {
-                    field = "DATE_FORMAT(" + dim.getTableId() + "." + dim.getFieldName() + ", '%Y-%m')";
+                    field = "DATE_FORMAT(" + selectField + ", '%Y-%m')";
                     groupByDimList.add(field);
                     orderByDimList.add(field);
                 }
                 // date -> 2022-08-31
                 else if (dim.getTimeGrain().name().equals("DATE")) {
-                    field = "DATE(" + dim.getTableId() + "." + dim.getFieldName() + ")";
+                    field = "DATE(" + selectField + ")";
                     groupByDimList.add(field);
                     orderByDimList.add(field);
                 }
@@ -149,15 +149,15 @@ public class SelectClauseMysql {
                 // for day of week, also give day of week number for column sorting
                 // which should be available in group by list but not in select list
                 else if (dim.getTimeGrain().name().equals("DAYOFWEEK")) {
-                    String sortingFfield = "DAYOFWEEK(" + dim.getTableId() + "." + dim.getFieldName() + ")";
-                    field = "DAYNAME(" + dim.getTableId() + "." + dim.getFieldName() + ")";
+                    String sortingFfield = "DAYOFWEEK(" + selectField + ")";
+                    field = "DAYNAME(" + selectField + ")";
                                         groupByDimList.add(sortingFfield);
                     groupByDimList.add(field);
                     orderByDimList.add(sortingFfield);
                 }
                 // day of month -> 31
                 else if (dim.getTimeGrain().name().equals("DAYOFMONTH")) {
-                    field = "DAY(" + dim.getTableId() + "." + dim.getFieldName() + ")";
+                    field = "DAY(" + selectField + ")";
                     groupByDimList.add(field);
                     orderByDimList.add(field);
                 } else {
@@ -206,11 +206,11 @@ public class SelectClauseMysql {
                 if (meas.getAggr().name().equals("COUNT")) {
                     field = "COUNT(*)";
                 } else if (meas.getAggr().name().equals("COUNTNN")) {
-                    field = "COUNT(" + meas.getTableId() + "." + meas.getFieldName() + ")";
+                    field = "COUNT(" + selectField + ")";
                 } else if (meas.getAggr().name().equals("COUNTU")) {
-                    field = "COUNT(DISTINCT " + meas.getTableId() + "." + meas.getFieldName() + ")";
+                    field = "COUNT(DISTINCT " + selectField + ")";
                 } else if (meas.getAggr().name().equals("COUNTN")) {
-                    field = "SUM(CASE WHEN " + meas.getTableId() + "." + meas.getFieldName()
+                    field = "SUM(CASE WHEN " + selectField
                             + " IS NULL THEN 1 ELSE 0 END)";
                 } else {
                     throw new BadRequestException(
@@ -236,7 +236,7 @@ public class SelectClauseMysql {
 
                 if (aggrList.contains(meas.getAggr().name()) && timeGrainList.contains(meas.getTimeGrain().name())) {
                     field = meas.getAggr().name() + "(" + timeGrainMap.get(meas.getTimeGrain().name())
-                            + "(" + meas.getTableId() + "." + meas.getFieldName() + "))";
+                            + "(" +selectField + "))";
                 }
 
                 /*
@@ -244,16 +244,16 @@ public class SelectClauseMysql {
                  */
                 else if (meas.getAggr().name().equals("COUNTU") && timeGrainList.contains(meas.getTimeGrain().name())) {
                     field = "COUNT(DISTINCT(" + timeGrainMap.get(meas.getTimeGrain().name())
-                            + "(" + meas.getTableId() + "." + meas.getFieldName() + ")))";
+                            + "(" + selectField + ")))";
                 }
                 // checking ('yearquarter')
                 else if (meas.getAggr().name().equals("COUNTU") && meas.getTimeGrain().name().equals("YEARQUARTER")) {
                     field = "COUNT(DISTINCT(CONCAT(YEAR(" + meas.getTableId() + "." + meas.getFieldName()
-                            + "), '-Q', QUARTER(" + meas.getTableId() + "." + meas.getFieldName() + "))))";
+                            + "), '-Q', QUARTER(" + selectField + "))))";
                 }
                 // checking ('yearmonth')
                 else if (meas.getAggr().name().equals("COUNTU") && meas.getTimeGrain().name().equals("YEARMONTH")) {
-                    field = "COUNT(DISTINCT(DATE_FORMAT(" + meas.getTableId() + "." + meas.getFieldName()
+                    field = "COUNT(DISTINCT(DATE_FORMAT(" + selectField
                             + ", '%Y-%m')))";
                 }
 
@@ -263,7 +263,7 @@ public class SelectClauseMysql {
                 else if (meas.getAggr().name().equals("COUNT")) {
                     field = "COUNT(*)";
                 } else if (meas.getAggr().name().equals("COUNTNN")) {
-                    field = "COUNT(" + meas.getTableId() + "." + meas.getFieldName() + ")";
+                    field = "COUNT(" + selectField + ")";
                 } else if (meas.getAggr().name().equals("COUNTN")) {
                     field = "SUM(CASE WHEN " + meas.getTableId() + "." + meas.getFieldName()
                             + " IS NULL THEN 1 ELSE 0 END)";
@@ -275,16 +275,16 @@ public class SelectClauseMysql {
             // for number fields, do aggregation
             else if (List.of("INTEGER", "DECIMAL").contains(meas.getDataType().name())) {
                 if (List.of("SUM", "AVG", "MIN", "MAX").contains(meas.getAggr().name())) {
-                    field = meas.getAggr().name() + "(" + meas.getTableId() + "." + meas.getFieldName()
+                    field = meas.getAggr().name() + "(" + selectField
                             + ")";
                 } else if (meas.getAggr().name().equals("COUNT")) {
                     field = "COUNT(*)";
                 } else if (meas.getAggr().name().equals("COUNTNN")) {
-                    field = "COUNT(" + meas.getTableId() + "." + meas.getFieldName() + ")";
+                    field = "COUNT(" +selectField + ")";
                 } else if (meas.getAggr().name().equals("COUNTU")) {
-                    field = "COUNT(DISTINCT " + meas.getTableId() + "." + meas.getFieldName() + ")";
+                    field = "COUNT(DISTINCT " + selectField + ")";
                 } else if (meas.getAggr().name().equals("COUNTN")) {
-                    field = "SUM(CASE WHEN " + meas.getTableId() + "." + meas.getFieldName()
+                    field = "SUM(CASE WHEN " + selectField
                             + " IS NULL THEN 1 ELSE 0 END)";
                 } else {
                     throw new BadRequestException(

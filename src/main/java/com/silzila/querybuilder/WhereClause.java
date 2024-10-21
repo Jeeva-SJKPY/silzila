@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import com.silzila.payload.request.Filter;
 import com.silzila.payload.request.FilterPanel;
 import com.silzila.querybuilder.calculatedField.CalculatedFieldQueryComposer;
+import com.silzila.querybuilder.calculatedField.selectClause.MySQLCalculatedField;
 import com.silzila.querybuilder.calculatedField.selectClause.PostgresCalculatedField;
 
 // to build where clause in Query construction
@@ -80,14 +81,22 @@ public class WhereClause {
                 String flowKey = "";
                 for (String key : filter.getCalculatedField().getFlows().keySet()) {
                     flowKey = key;  
-                }
+                } if(vendorName.equals("postgresql")){
                 filter.setDataType(Filter.DataType.fromValue(
                     PostgresCalculatedField.getDataType(
                         filter.getCalculatedField().getFlows(), 
                         filter.getCalculatedField().getFields(), 
                         filter.getCalculatedField().getFlows().get(flowKey).get(0)
                     )
+                ));} else if (vendorName.equals("mysql")) { filter.setDataType(Filter.DataType.fromValue(
+                        MySQLCalculatedField.getDataType(
+                                filter.getCalculatedField().getFlows(),
+                                filter.getCalculatedField().getFields(),
+                                filter.getCalculatedField().getFlows().get(flowKey).get(0)
+                        )
                 ));
+
+                }
             }
 
             // check if Negative match or Positive match

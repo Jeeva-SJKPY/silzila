@@ -461,11 +461,11 @@ public class PostgresCalculatedField {
             }
         }
     
-        if (basicMathOperations.containsKey(flowType) 
-            || List.of("dateInterval", "datePartNumber").contains(flowType) 
+        if (basicMathOperations.containsKey(flowType)
+            || List.of("dateInterval", "datePartNumber").contains(flowType)
             || firstFlow.getIsAggregation()) {
             return "integer";
-        } else if (basicTextOperations.containsKey(flowType) 
+        } else if (basicTextOperations.containsKey(flowType)
             || List.of("datePartName").contains(flowType)) {
             return "text";
         } else if ("currentTimeStamp".equals(flowType)) {

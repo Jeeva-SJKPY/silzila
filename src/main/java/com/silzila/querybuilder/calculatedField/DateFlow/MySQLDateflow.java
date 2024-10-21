@@ -10,7 +10,7 @@ import java.util.Map;
 public class MySQLDateflow {
     private static Map<String,String> dateParts = Map.of("day","DAY","week","WEEK","month","MONTH","year","YEAR");
 
-    private static Map<String,String> dateOperations = Map.of("currentDate", "CURRENT_DATE","currentTimestamp","NOW()","minDate","MIN","maxDate","MAX");
+    private static Map<String,String> dateOperations = Map.of("currentDate", "CURRENT_DATE()","currentTimestamp","CURRENT_TIMESTAMP()","minDate","MIN","maxDate","MAX");
 
     public static String mySQLDateFlow(Flow flow, Map<String, Field> fields, Map<String, String> flowStringMap, String flowKey){
         return switch(flow.getFlow()) {
@@ -33,7 +33,7 @@ public class MySQLDateflow {
 
         List<String> processedSource = processDateSources(flow, fields, flowStringMap);
 
-        result.append("TO_DATE (").append(processedSource.get(0)).append(",").append(processedSource.get(1)).append(")");
+        result.append("STR_TO_DATE (").append(processedSource.get(0)).append(",").append(processedSource.get(1)).append(")");
 
         return result.toString();
     }
@@ -46,7 +46,7 @@ public class MySQLDateflow {
 
         List<String> processedSource = processDateSources(flow, fields, flowStringMap);
 
-        result.append(processedSource.get(0)).append("::DATE + INTERVAL '").append(flow.getSource().get(1)).append(" ").append(flow.getSource().get(2).toUpperCase()).append("'");
+        result.append(" DATE_ADD(").append(processedSource.get(0)).append(" , INTERVAL ").append(flow.getSource().get(1)).append(" ").append(flow.getSource().get(2).toUpperCase()).append(")");
 
         return result.toString();
     }
@@ -59,11 +59,10 @@ public class MySQLDateflow {
 
         String result = """
                             CASE 
-                                WHEN 'day' = '%?' THEN ( %!::DATE - %&::DATE)::INTEGER
-                                WHEN 'week' = '%?' THEN (( %!::DATE - %&::DATE) / 7)::INTEGER
-                                WHEN 'month' = '%?' THEN  (EXTRACT(YEAR FROM AGE( %!::DATE, %&::DATE)) * 12) +
-                                    EXTRACT(MONTH FROM AGE( %!::DATE, %&::DATE))
-                                WHEN 'year' = '%?' THEN EXTRACT(YEAR FROM AGE( %!::DATE, %&::DATE))
+                                WHEN 'day' = '%?' THEN DATEDIFF(%!,%&)
+                                WHEN 'week' = '%?' THEN (DATEDIFF(%!,%&) / 7)
+                                WHEN 'month' = '%?' THEN  TIMESTAMPDIFF(MONTH, %! , %&) 
+                                WHEN 'year' = '%?' THEN  TIMESTAMPDIFF(YEAR, %! , %&) 
                             END
                 """;
         result = result.replace("%!", processedSource.get(0))
@@ -81,7 +80,16 @@ public class MySQLDateflow {
 
         List<String> processedSource = processDateSources(flow, fields, flowStringMap);
 
-        result.append("TO_CHAR(").append(processedSource.get(0)).append("::DATE, '").append(dateParts.get(flow.getSource().get(1))).append("')");
+        String part = flow.getSource().get(1);
+
+        if(part.equals("day")){
+            part = "%W";
+        }
+        else if (part.equals("month")){
+            part = "%M";
+        }
+
+        result.append("DATE_FORMAT(").append(processedSource.get(0)).append(", '").append(part).append("')");
 
         return result.toString();
     }
@@ -94,7 +102,7 @@ public class MySQLDateflow {
 
         List<String> processedSource = processDateSources(flow, fields, flowStringMap);
 
-        result.append("EXTRACT(").append(dateParts.get(flow.getSource().get(1))).append(" FROM ").append(processedSource.get(0)).append("::DATE)");
+        result.append("EXTRACT(").append(dateParts.get(flow.getSource().get(1))).append(" FROM ").append(processedSource.get(0)).append(")");
 
         return result.toString();
     }
@@ -107,7 +115,17 @@ public class MySQLDateflow {
 
         List<String> processedSource = processDateSources(flow, fields, flowStringMap);
 
-        result.append("DATE_TRUNC('").append(dateParts.get(flow.getSource().get(1))).append("',").append(processedSource.get(0)).append("::DATE)");
+        String part = flow.getSource().get(1);
+
+        if(part.equals("year")){
+            result.append("DATE_FORMAT(").append(processedSource.get(0)).append(",").append("'%Y-01-01')");
+        }
+        else if (part.equals("month")){
+            result.append("DATE_FORMAT(").append(processedSource.get(0)).append(",").append("'%Y-%m-01')");
+        }
+        else if (part.equals("week")){
+            result.append("DATE_SUB(").append(processedSource.get(0)).append(",INTERVAL (DAYOFWEEK(").append(processedSource.get(0)).append(") - 1) DAY)");
+        }
 
         return result.toString();
     }

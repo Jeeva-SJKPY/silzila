@@ -84,6 +84,7 @@ public class PostgresCalculatedField {
         }
 
         resolveFlowDependencies(flowMap, flowForConditionFilter);
+        procesFlowReqruiredForCondition(flowForConditionFilter, flowMap, fields, flowStringMap, conditionFilterStringMap);
         processConditionFilters(conditionFilterMap, fields, flowStringMap, conditionFilterStringMap);
         processFlows(flowForConditionFilter, flowMap, fields, flowStringMap, conditionFilterStringMap);
     
@@ -189,8 +190,7 @@ public class PostgresCalculatedField {
                                      Map<String, List<Flow>> flowMap,
                                      Map<String, Field> fields,
                                      Map<String, String> flowStringMap,
-                                     Map<String, String> conditionFilterStringMap,
-                                     Map<String, String> basicMathOperations) {
+                                     Map<String, String> conditionFilterStringMap) {
     
         flowForConditionFilter.forEach(flowKey -> {
             List<Flow> flows = flowMap.get(flowKey);
@@ -198,11 +198,14 @@ public class PostgresCalculatedField {
     
             if (firstFlow.getCondition() != null) {
                 processConditionalFlow(flows, flowStringMap, conditionFilterStringMap, fields, flowKey);
-            } else if (basicMathOperations.containsKey(firstFlow.getFlow())) {
+            } else if (basicMathOperations.containsKey(firstFlow.getFlow())){
                 processNonConditionalMathFlow(firstFlow, fields, flowStringMap, flowKey);
             }
+            else if (basicTextOperations.containsKey(firstFlow.getFlow())){
+                processNonConditionalTextFlow(firstFlow, fields, flowStringMap, flowKey);
+            }
             else{
-
+                processNonConditionalDateFlow(firstFlow, fields, flowStringMap, flowKey);
             }
         });
     }
@@ -260,7 +263,11 @@ public class PostgresCalculatedField {
             query.append(field.getTableId()).append(".").append(field.getFieldName()).append(" ");
         } else if ("flow".equals(sourceType)) {
             query.append(flowStringMap.get(flow.getSource().get(0))).append(" ");
-        } else {
+        }
+        else if(sourceType.equals("text")){
+            query.append("'").append(flow.getSource().get(0)).append("'").append(" ");
+        } 
+        else {
             query.append(flow.getSource().get(0)).append(" ");
         }
     }

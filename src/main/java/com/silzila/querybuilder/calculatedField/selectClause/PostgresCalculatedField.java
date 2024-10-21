@@ -456,12 +456,10 @@ public class PostgresCalculatedField {
     
         if ("if".equals(firstFlow.getCondition())) {
             String result = conditionFlowDateType(flows, fields, firstFlow);
-            if (result != null) {
-                return result;
-            }
+            return  result;
         }
     
-        if (basicMathOperations.containsKey(flowType)
+        else if (basicMathOperations.containsKey(flowType)
             || List.of("dateInterval", "datePartNumber").contains(flowType)
             || firstFlow.getIsAggregation()) {
             return "integer";
@@ -490,8 +488,10 @@ public class PostgresCalculatedField {
             }
             return "unknown";
         }
-    
-        return null;
+
+        else{
+            return sourceType;
+        }
     }
     
 }

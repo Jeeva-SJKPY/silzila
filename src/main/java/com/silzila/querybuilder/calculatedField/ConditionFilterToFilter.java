@@ -33,6 +33,7 @@ public class ConditionFilterToFilter {
 
         mapOperatorAndType(condition, filter);
         filter.setShouldExclude(condition.getShouldExclude());
+        filter.setIsTillDate(condition.getIsTillDate());
         filter.setUserSelection(buildUserSelection(rightOperand, rightOperandType, fields, flowMap));
 
         filters.add(filter);
@@ -69,7 +70,8 @@ private static void mapOperatorAndType(Condition condition, Filter filter) {
     } else if (operator.equals("tillDate")) {
         filter.setFilterType("tillDate");
         filter.setDataType(DataType.DATE);
-        filter.setOperator(Filter.Operator.fromValue("between"));
+        filter.setIsTillDate(true);
+        filter.setOperator(Filter.Operator.fromValue("in"));
     } else {
         filter.setFilterType("search");
         filter.setOperator(Filter.Operator.fromValue(operator));

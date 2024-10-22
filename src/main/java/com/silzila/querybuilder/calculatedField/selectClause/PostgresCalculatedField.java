@@ -174,7 +174,7 @@ public class PostgresCalculatedField {
                             conditionFilter.getConditions(), fields, flowStringMap);
                     try {
                         String conditionString = WhereClause.filterPanelWhereString(
-                                filters, conditionFilter.getShouldAllConditionsMatch(), "postgres");
+                                filters, conditionFilter.getShouldAllConditionsMatch(), "postgresql");
                         conditionFilterStringMap.put(key, conditionString);
                     } catch (BadRequestException e) {
                         e.printStackTrace();

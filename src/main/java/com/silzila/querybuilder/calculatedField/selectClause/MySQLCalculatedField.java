@@ -36,15 +36,15 @@ public class MySQLCalculatedField {
 
         private final static Map<String, String> basicTextOperations = Map.ofEntries(
                 Map.entry("concat", "CONCAT"),
-               // Map.entry("propercase", "INITCAP"),
+               Map.entry("propercase", "INITCAP"),
                 Map.entry("lowercase", "LOWER"),
                 Map.entry("uppercase", "UPPER"),
                 Map.entry("trim", "TRIM"),
                 Map.entry("ltrim", "LTRIM"),
                 Map.entry("rtrim", "RTRIM"),
                 Map.entry("length", "CHAR_LENGTH"),
-               // Map.entry("substringright", "RIGHT"),
-               // Map.entry("substringleft", "SUBSTRING"),
+               Map.entry("substringright", "RIGHT"),
+               Map.entry("substringleft", "SUBSTRING"),
                 Map.entry("replace", "REPLACE"),
                 Map.entry("split", "SUBSTRING_INDEX")
         );
@@ -349,10 +349,10 @@ public class MySQLCalculatedField {
 
             List<String> processedSources = processTextSources(firstFlow, fields, flowStringMap);
 
-            if(List.of("concat","propercase","uppercase","lowercase","trim","ltrim","rtrim","length").contains(flowType)){
+            if(List.of("concat","uppercase","lowercase","trim","ltrim","rtrim","length").contains(flowType)){
                 result.append(processTextSingleArgumentOperations(flowType,processedSources));
             }
-            else if(List.of("substringright","substringleft").contains(flowType)){
+            else if(List.of("propercase","substringright","substringleft").contains(flowType)){
                 result.append(processSubStringOperations(firstFlow,flowType,processedSources));
             }
             else if ("replace".equals(flowType)){
@@ -409,6 +409,7 @@ public class MySQLCalculatedField {
                         .append(flow.getSource().get(1))
                         .append(")");
             }
+            System.out.println("Result " + result.toString());
             return result.toString();
         }
 

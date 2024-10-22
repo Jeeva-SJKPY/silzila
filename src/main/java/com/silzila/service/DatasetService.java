@@ -396,6 +396,7 @@ public class DatasetService {
             // relative Date filter
             // Get the first filter panel from the request
             // Assuming req.getFilterPanels() returns a list of FilterPanel objects
+            relativeFilterProcessor.processQueryCalculatedField(req,userId,dBConnectionId,datasetId,this::relativeFilter);
             List<FilterPanel> filterPanels = relativeFilterProcessor.processFilterPanels(req.getFilterPanels(), userId, dBConnectionId, datasetId,this::relativeFilter);
             req.setFilterPanels(filterPanels);
         }
@@ -514,6 +515,9 @@ public class DatasetService {
                  * SQL Dialect will be different based on vendor name
                  */
                 vendorName = connectionPoolService.getVendorNameFromConnectionPool(dBConnectionId, userId);
+                if(columnFilter.getIsCalculatedField()){
+                relativeFilterProcessor.processCalculatedFields(Collections.singletonList(columnFilter.getCalculatedField()), userId, dBConnectionId, datasetId, this::relativeFilter);
+                };
                 String query = filterOptionsQueryComposer.composeQuery(columnFilter, ds, vendorName);
                 logger.info("\n******* QUERY **********\n" + query);
                 JSONArray jsonArray = connectionPoolService.runQuery(dBConnectionId, userId, query);
@@ -566,6 +570,8 @@ public class DatasetService {
     ClassNotFoundException, BadRequestException{
 
         String vendorName = connectionPoolService.getVendorNameFromConnectionPool(dbConnectionId, userId);
+
+        relativeFilterProcessor.processCalculatedFields( Collections.singletonList(calculatedFieldRequest), userId, dbConnectionId, datasetId, this::relativeFilter);
 
         DatasetDTO ds = loadDatasetInBuffer(dbConnectionId,datasetId, userId);
 

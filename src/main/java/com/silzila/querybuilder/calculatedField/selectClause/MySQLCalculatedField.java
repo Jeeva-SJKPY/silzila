@@ -18,7 +18,6 @@ import com.silzila.querybuilder.RelationshipClauseGeneric;
 import com.silzila.querybuilder.WhereClause;
 import com.silzila.querybuilder.calculatedField.ConditionFilterToFilter;
 import com.silzila.querybuilder.calculatedField.DateFlow.MySQLDateflow;
-import com.silzila.querybuilder.calculatedField.DateFlow.PostgresDateFlow;
 
 public class MySQLCalculatedField {
         private final static Map<String, String> basicMathOperations = Map.of(

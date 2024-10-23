@@ -465,7 +465,6 @@ public class PostgresCalculatedField {
             String result = conditionFlowDateType(flows, fields, firstFlow);
             return  result;
         }
-    
         else if (basicMathOperations.containsKey(flowType)
             || List.of("dateInterval", "datePartNumber").contains(flowType)
             || firstFlow.getIsAggregation()) {

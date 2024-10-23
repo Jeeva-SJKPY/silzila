@@ -11,6 +11,7 @@ import com.silzila.helper.AilasMaker;
 import com.silzila.payload.request.Dimension;
 import com.silzila.payload.request.Measure;
 import com.silzila.payload.request.Query;
+import com.silzila.querybuilder.calculatedField.helper.DataTypeProvider;
 import com.silzila.querybuilder.calculatedField.selectClause.PostgresCalculatedField;
 
 
@@ -72,7 +73,7 @@ public class SelectClausePostgres {
                     flowKey = key;  
                 }
                 dim.setDataType(Dimension.DataType.fromValue(
-                    PostgresCalculatedField.getDataType(
+                    DataTypeProvider.getDataType(
                         dim.getCalculatedField().getFlows(), 
                         dim.getCalculatedField().getFields(), 
                         dim.getCalculatedField().getFlows().get(flowKey).get(0)
@@ -191,7 +192,7 @@ public class SelectClausePostgres {
                     flowKey = key;  
                 }
                 meas.setDataType(Measure.DataType.fromValue(
-                    PostgresCalculatedField.getDataType(
+                    DataTypeProvider.getDataType(
                         meas.getCalculatedField().getFlows(), 
                         meas.getCalculatedField().getFields(), 
                         meas.getCalculatedField().getFlows().get(flowKey).get(0)

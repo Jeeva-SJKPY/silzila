@@ -13,6 +13,7 @@ import com.silzila.helper.ColumnListFromClause;
 import com.silzila.payload.request.ColumnFilter;
 import com.silzila.payload.request.Table;
 import com.silzila.querybuilder.RelationshipClauseGeneric;
+import com.silzila.querybuilder.calculatedField.helper.DataTypeProvider;
 import com.silzila.querybuilder.calculatedField.selectClause.PostgresCalculatedField;
 
 public class FilterQueryPostgres {
@@ -57,7 +58,7 @@ public class FilterQueryPostgres {
                     flowKey = key;  
                 }
                 req.setDataType(ColumnFilter.DataType.fromValue(
-                    PostgresCalculatedField.getDataType(
+                    DataTypeProvider.getDataType(
                         req.getCalculatedField().getFlows(),
                         req.getCalculatedField().getFields(),
                         req.getCalculatedField().getFlows().get(flowKey).get(0)

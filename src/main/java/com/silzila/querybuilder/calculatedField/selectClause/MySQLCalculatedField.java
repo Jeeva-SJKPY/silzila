@@ -77,11 +77,17 @@ public class MySQLCalculatedField {
             Map<String, String> flowStringMap = new HashMap<>();
             List<String> flowForConditionFilter = extractFlowForConditionFilters(conditionFilterMap);
 
+            String flowKey = "";
+            for (String key : flowMap.keySet()) {
+                flowKey = key;  
+            }
+
             resolveFlowDependencies(flowMap, flowForConditionFilter);
+            procesFlowReqruiredForCondition(flowForConditionFilter, flowMap, fields, flowStringMap, conditionFilterStringMap);
             processConditionFilters(conditionFilterMap, fields, flowStringMap, conditionFilterStringMap);
             processFlows(flowForConditionFilter, flowMap, fields, flowStringMap, conditionFilterStringMap);
-
-            return calculatedField.append(flowStringMap.get("f1")).toString();
+        
+            return calculatedField.append(flowStringMap.get(flowKey)).toString();
         }
 
         public static String calculatedFieldComposedWithAlias(CalculatedFieldRequest calculatedFieldRequest){
@@ -183,22 +189,24 @@ public class MySQLCalculatedField {
                                                             Map<String, List<Flow>> flowMap,
                                                             Map<String, Field> fields,
                                                             Map<String, String> flowStringMap,
-                                                            Map<String, String> conditionFilterStringMap,
-                                                            Map<String, String> basicMathOperations) {
+                                                            Map<String, String> conditionFilterStringMap) {
 
-            flowForConditionFilter.forEach(flowKey -> {
-                List<Flow> flows = flowMap.get(flowKey);
-                Flow firstFlow = flows.get(0);
-
-                if (firstFlow.getCondition() != null) {
-                    processConditionalFlow(flows, flowStringMap, conditionFilterStringMap, fields, flowKey);
-                } else if (basicMathOperations.containsKey(firstFlow.getFlow())) {
-                    processNonConditionalMathFlow(firstFlow, fields, flowStringMap, flowKey);
-                }
-                else{
-
-                }
-            });
+                    flowForConditionFilter.forEach(flowKey -> {
+                    List<Flow> flows = flowMap.get(flowKey);
+                    Flow firstFlow = flows.get(0);
+            
+                    if (firstFlow.getCondition() != null) {
+                        processConditionalFlow(flows, flowStringMap, conditionFilterStringMap, fields, flowKey);
+                    } else if (basicMathOperations.containsKey(firstFlow.getFlow())){
+                        processNonConditionalMathFlow(firstFlow, fields, flowStringMap, flowKey);
+                    }
+                    else if (basicTextOperations.containsKey(firstFlow.getFlow())){
+                        processNonConditionalTextFlow(firstFlow, fields, flowStringMap, flowKey);
+                    }
+                    else{
+                        processNonConditionalDateFlow(firstFlow, fields, flowStringMap, flowKey);
+                    }
+                });
         }
 
         private static void processFlows(List<String> flowForConditionFilter,
@@ -388,10 +396,16 @@ public class MySQLCalculatedField {
                         .append(", 2)))");
             }
             else if(flowType.equals("substringright")){
-                result.append("SUBSTRING(").append(processedSources.get(0))
+                result.append("CASE \n\tWHEN CHAR_LENGTH(")
+                        .append(processedSources.get(0))
+                        .append(") <")
+                        .append(flow.getSource().get(1))
+                        .append(" THEN ")
+                        .append(processedSources.get(0))
+                        .append(" \n\tELSE SUBSTRING(").append(processedSources.get(0))
                         .append(", CHAR_LENGTH(").append(processedSources.get(0))
                         .append(") -").append(flow.getSource().get(1))
-                        .append("+ 1)");
+                        .append("+ 1) \n\tEND");
 
             } else if (flowType.equals("substringleft")) {
                 result.append("SUBSTRING(")

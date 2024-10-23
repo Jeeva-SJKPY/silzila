@@ -5,13 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
-
+import com.silzila.querybuilder.calculatedField.helper.DataTypeProvider;
 import com.silzila.querybuilder.calculatedField.selectClause.MySQLCalculatedField;
-import com.silzila.querybuilder.calculatedField.selectClause.PostgresCalculatedField;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.silzila.payload.internals.QueryClauseFieldListMap;
@@ -81,11 +76,15 @@ public class SelectClauseMysql {
 
             String selectField = dim.getIsCalculatedField()? MySQLCalculatedField.calculatedFieldComposed(dim.getCalculatedField()):dim.getTableId() + "." + dim.getFieldName();
             if (dim.getIsCalculatedField()) {
+                String flowKey = "";
+                for (String key : dim.getCalculatedField().getFlows().keySet()) {
+                    flowKey = key;  
+                }
                 dim.setDataType(Dimension.DataType.fromValue(
-                        MySQLCalculatedField.getDataType(
+                        DataTypeProvider.getDataType(
                                 dim.getCalculatedField().getFlows(),
                                 dim.getCalculatedField().getFields(),
-                                dim.getCalculatedField().getFlows().get("f1").get(0)
+                                dim.getCalculatedField().getFlows().get(flowKey).get(0)
                         )
                 ));
             }
@@ -192,11 +191,15 @@ public class SelectClauseMysql {
 
             String selectField = meas.getIsCalculatedField()? MySQLCalculatedField.calculatedFieldComposed(meas.getCalculatedField()):meas.getTableId() + "." + meas.getFieldName();
             if (meas.getIsCalculatedField()) {
+                String flowKey = "";
+                for (String key : meas.getCalculatedField().getFlows().keySet()) {
+                    flowKey = key;  
+                }
                 meas.setDataType(Measure.DataType.fromValue(
-                        MySQLCalculatedField.getDataType(
+                        DataTypeProvider.getDataType(
                                 meas.getCalculatedField().getFlows(),
                                 meas.getCalculatedField().getFields(),
-                                meas.getCalculatedField().getFlows().get("f1").get(0)
+                                meas.getCalculatedField().getFlows().get(flowKey).get(0)
                         )
                 ));
             }

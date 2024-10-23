@@ -23,4 +23,9 @@ public class DB2QueryBuilder implements QueryBuilder{
     public String buildSampleRecordQuery(CalculatedFieldRequest request,DatasetDTO datasetDTO,Integer recordCount) {
         return null;
     }
+
+    @Override 
+    public void setDatasetDTOForAggregation(DatasetDTO datasetDTO){
+        
+    }
 }

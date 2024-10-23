@@ -1,6 +1,7 @@
 package com.silzila.querybuilder.calculatedField.selectClause;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +21,8 @@ import com.silzila.querybuilder.calculatedField.ConditionFilterToFilter;
 import com.silzila.querybuilder.calculatedField.DateFlow.PostgresDateFlow;
 
 public class PostgresCalculatedField {
+
+    private static ThreadLocal<DatasetDTO> threadLocalDatasetDTO = new ThreadLocal<>();
 
     private final static Map<String, String> basicMathOperations = Map.of(
                 "addition", "+",
@@ -351,6 +354,16 @@ public class PostgresCalculatedField {
 
         if (flow.getIsAggregation()) {
             processedSource = flow.getAggregation().get(index) + "(" + processedSource + ")";
+            if("field".equals(sourceType)){
+                Field field = fields.get(source);
+                try {
+                    String fromClause = RelationshipClauseGeneric.buildRelationship(Collections.singletonList(field.getTableId()),threadLocalDatasetDTO.get().getDataSchema(), "postgresql");
+                    processedSource = "(SELECT " + processedSource + " FROM " + fromClause + ")";
+                } catch (BadRequestException e) {
+                    System.out.println(e.getMessage());
+                }
+                
+            }
         }
         return processedSource;
     }
@@ -456,49 +469,11 @@ public class PostgresCalculatedField {
             String dateFlow = PostgresDateFlow.postgresDateFlow(firstFlow,fields,flowStringMap,flowKey);
             flowStringMap.put(flowKey, dateFlow);
     }
+ 
 
-    // to get a datatype of a flow 
-    public static String getDataType(Map<String, List<Flow>> flows, Map<String, Field> fields, Flow firstFlow) {
-        String flowType = firstFlow.getFlow();
-    
-        if ("if".equals(firstFlow.getCondition())) {
-            String result = conditionFlowDateType(flows, fields, firstFlow);
-            return  result;
-        }
-        else if (basicMathOperations.containsKey(flowType)
-            || List.of("dateInterval", "datePartNumber").contains(flowType)
-            || firstFlow.getIsAggregation()) {
-            return "integer";
-        } else if (basicTextOperations.containsKey(flowType)
-            || List.of("datePartName").contains(flowType)) {
-            return "text";
-        } else if ("currentTimeStamp".equals(flowType)) {
-            return "timestamp";
-        } else {
-            return "date";
-        }
+    public static void setDatasetForAggregation(DatasetDTO datasetDTO){
+        threadLocalDatasetDTO.set(datasetDTO);
     }
-    
-    private static String conditionFlowDateType(Map<String, List<Flow>> flows, Map<String, Field> fields, Flow firstFlow) {
-        String sourceType = firstFlow.getSourceType().get(0);
-    
-        if ("field".equals(sourceType)) {
-            Field field = fields.get(firstFlow.getSource().get(0));
-            return (field != null) ? field.getDataType().toString() : "unknown";
-        } else if ("flow".equals(sourceType)) {
-            String flowSourceId = firstFlow.getSource().get(0);
-            List<Flow> sourceFlows = flows.get(flowSourceId);
-    
-            if (sourceFlows != null && !sourceFlows.isEmpty()) {
-                return getDataType(flows, fields, sourceFlows.get(0));
-            }
-            return "unknown";
-        }
 
-        else{
-            return sourceType;
-        }
-    }
-    
 }
     

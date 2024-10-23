@@ -949,7 +949,8 @@ public class ConnectionPoolService {
                     }
                     // construct query
                     if(calculatedFieldRequests!=null){
-                        relativeFilterProcessor.processCalculatedFields( calculatedFieldRequests, userId, vendorName, datasetId, this::relativeFilter);
+                        relativeFilterProcessor.processCalculatedFields( calculatedFieldRequests, userId, databaseId, datasetId, this::relativeFilter);
+                        calculatedFieldQueryComposer.setDatasetDTOForAggregation(ds, vendorName);
                         calculatedField.append(" , ").append(calculatedFieldQueryComposer.composeQuery(calculatedFieldRequests, vendorName));
                     }
                     query = "SELECT "+ tblId +".* " + calculatedField + " FROM " + fromClause + " LIMIT " + recordCount;

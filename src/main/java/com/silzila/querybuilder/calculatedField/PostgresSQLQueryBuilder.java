@@ -24,4 +24,9 @@ public class PostgresSQLQueryBuilder implements QueryBuilder{
     public String buildSampleRecordQuery(CalculatedFieldRequest request,DatasetDTO datasetDTO,Integer recordCount) throws BadRequestException{
         return PostgresCalculatedField.composeSampleRecordQuery(request, datasetDTO,recordCount);
     }
+
+    @Override 
+    public void setDatasetDTOForAggregation(DatasetDTO datasetDTO){
+        PostgresCalculatedField.setDatasetForAggregation(datasetDTO);
+    }
 }

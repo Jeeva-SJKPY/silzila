@@ -32,4 +32,10 @@ public class CalculatedFieldQueryComposer {
 
         return queryBuilder.build(calculatedFieldRequest);
     }
+
+    public void setDatasetDTOForAggregation(DatasetDTO datasetDTO,String vendor){
+        QueryBuilder queryBuilder = QueryBuilderFactory.getQueryBuilder(vendor);
+        queryBuilder.setDatasetDTOForAggregation(datasetDTO);
+
+    }
 }

@@ -16,4 +16,6 @@ public interface QueryBuilder {
 
     //handling single request to get sample records
     public String buildSampleRecordQuery(CalculatedFieldRequest request,DatasetDTO datasetDTO,Integer recordCount) throws BadRequestException;
+
+    public void setDatasetDTOForAggregation(DatasetDTO datasetDTO);
 }

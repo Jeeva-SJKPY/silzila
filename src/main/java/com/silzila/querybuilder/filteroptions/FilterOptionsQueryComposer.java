@@ -53,7 +53,7 @@ public class FilterOptionsQueryComposer {
                 finalQuery = FilterQueryPostgres.getFilterOptions(cf, table,ds);
             } else if (vendorName.equals("mysql")) {
                 logger.info("------ inside mysql block");
-                finalQuery = FilterQueryMysql.getFilterOptions(cf, table);
+                finalQuery = FilterQueryMysql.getFilterOptions(cf, table,ds);
             } else if (vendorName.equals("sqlserver")) {
                 logger.info("------ inside sql server block");
                 finalQuery = FilterQuerySqlserver.getFilterOptions(cf, table);

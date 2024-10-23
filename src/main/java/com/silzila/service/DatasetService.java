@@ -397,6 +397,7 @@ public class DatasetService {
             // Get the first filter panel from the request
             // Assuming req.getFilterPanels() returns a list of FilterPanel objects
             relativeFilterProcessor.processQueryCalculatedField(req,userId,dBConnectionId,datasetId,this::relativeFilter);
+            calculatedFieldQueryComposer.setDatasetDTOForAggregation(ds, vendorName);
             List<FilterPanel> filterPanels = relativeFilterProcessor.processFilterPanels(req.getFilterPanels(), userId, dBConnectionId, datasetId,this::relativeFilter);
             req.setFilterPanels(filterPanels);
         }
@@ -517,6 +518,7 @@ public class DatasetService {
                 vendorName = connectionPoolService.getVendorNameFromConnectionPool(dBConnectionId, userId);
                 if(columnFilter.getIsCalculatedField()){
                 relativeFilterProcessor.processCalculatedFields(Collections.singletonList(columnFilter.getCalculatedField()), userId, dBConnectionId, datasetId, this::relativeFilter);
+                calculatedFieldQueryComposer.setDatasetDTOForAggregation(ds,vendorName);
                 };
                 String query = filterOptionsQueryComposer.composeQuery(columnFilter, ds, vendorName);
                 logger.info("\n******* QUERY **********\n" + query);
@@ -574,6 +576,8 @@ public class DatasetService {
         relativeFilterProcessor.processCalculatedFields( Collections.singletonList(calculatedFieldRequest), userId, dbConnectionId, datasetId, this::relativeFilter);
 
         DatasetDTO ds = loadDatasetInBuffer(dbConnectionId,datasetId, userId);
+
+        calculatedFieldQueryComposer.setDatasetDTOForAggregation(ds, vendorName);
 
         String query = calculatedFieldQueryComposer.composeSampleRecordQuery(calculatedFieldRequest, vendorName, ds,recordCount);
 

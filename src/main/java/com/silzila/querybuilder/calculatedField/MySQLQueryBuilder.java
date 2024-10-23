@@ -25,4 +25,9 @@ public class MySQLQueryBuilder implements QueryBuilder{
     public String build(CalculatedFieldRequest request) {
         return MySQLCalculatedField.calculatedFieldComposed(request);
     }
+
+    @Override 
+    public void setDatasetDTOForAggregation(DatasetDTO datasetDTO){
+        MySQLCalculatedField.setDatasetForAggregation(datasetDTO);
+    }
 }

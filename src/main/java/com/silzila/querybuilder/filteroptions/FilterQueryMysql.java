@@ -5,6 +5,8 @@ import java.util.Objects;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import com.silzila.dto.DatasetDTO;
 import com.silzila.exception.BadRequestException;
 import com.silzila.payload.request.ColumnFilter;
 import com.silzila.payload.request.Table;
@@ -15,7 +17,7 @@ public class FilterQueryMysql {
 
     private static final Logger logger = LogManager.getLogger(FilterQueryMysql.class);
 
-    public static String getFilterOptions(ColumnFilter req, Table table) throws BadRequestException {
+    public static String getFilterOptions(ColumnFilter req, Table table,DatasetDTO datasetDTO) throws BadRequestException {
         logger.info("=========== FilterQueryMysql fn calling...");
         /*
          * ************************************************

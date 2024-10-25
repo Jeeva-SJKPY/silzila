@@ -368,7 +368,7 @@ public class DuckDbService {
             String encryptKey = "PRAGMA add_parquet_key('key256', '" + encryptVal + "')";
             stmtRecords.execute(encryptKey);
             //checking whether the dataset has filter panel or not
-            if (ds.getDataSchema().getFilterPanels().isEmpty()) {
+            if (ds.getDataSchema().getFilterPanels().isEmpty() || whereClause.isEmpty()) {
                 query = "SELECT * from read_parquet('" + parquetFilePath + "',encryption_config = {footer_key: 'key256'}) LIMIT 200;";
             } else {
                 query = "SELECT * from read_parquet('" + parquetFilePath + "',encryption_config = {footer_key: 'key256'})" + " AS " + tableId + "\n" + whereClause + " LIMIT 200;";

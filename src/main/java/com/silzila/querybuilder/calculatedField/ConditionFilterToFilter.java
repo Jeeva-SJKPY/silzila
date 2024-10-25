@@ -3,15 +3,16 @@ package com.silzila.querybuilder.calculatedField;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
 import com.silzila.payload.request.Condition;
 import com.silzila.payload.request.Field;
 import com.silzila.payload.request.Filter;
 import com.silzila.payload.request.Filter.DataType;
+import com.silzila.querybuilder.calculatedField.helper.DataTypeProvider;
+import com.silzila.payload.request.Flow;
 
 public class ConditionFilterToFilter {
     
-    public static List<Filter> mapConditionFilterToFilter(List<Condition> conditions, Map<String, Field> fields, Map<String, String> flowMap) {
+    public static List<Filter> mapConditionFilterToFilter(List<Condition> conditions, Map<String, Field> fields,Map<String, List<Flow>> flows,Map<String, String> flowMap) {
 
     List<Filter> filters = new ArrayList<>();
 
@@ -25,7 +26,7 @@ public class ConditionFilterToFilter {
         if (leftOperandType.get(0).equals("field")) {
             setFieldFilter(leftOperand.get(0), filter, fields);
         } else if (leftOperandType.get(0).equals("flow")) {
-            setFlowFilter(leftOperand.get(0), filter, flowMap);
+            setFlowFilter(leftOperand.get(0), filter, flowMap,fields,flows);
         } else {
             filter.setFieldName(leftOperand.get(0));
             filter.setIsField(false);
@@ -54,9 +55,11 @@ private static void setFieldFilter(String leftOperand, Filter filter, Map<String
     filter.setTimeGrain(Filter.TimeGrain.fromValue(field.getTimeGrain()));
 }
 
-private static void setFlowFilter(String leftOperand, Filter filter, Map<String, String> flowMap) {
+private static void setFlowFilter(String leftOperand, Filter filter, Map<String, String> flowMap, Map<String, Field> fields,Map<String, List<Flow>> flows) {
     String flow = flowMap.get(leftOperand);
+    Flow flowType = flows.get(leftOperand).get(0);
     filter.setFieldName(flow);
+    filter.setDataType(Filter.DataType.fromValue(DataTypeProvider.getDataType(flows, fields, flowType)));
     filter.setIsField(false);
 }
 
@@ -97,5 +100,45 @@ private static List<String> buildUserSelection(List<String> rightOperand, List<S
     }
     return userSelection;
 }
+
+// to get a flow id's
+// private static Set<String> getTableIdsFromFlows(Map<String, List<Flow>> flowMap, Map<String, Field> fields) {
+//     Set<String> tableIds = new HashSet<>();
+//     Set<String> visitedFlows = new HashSet<>();
+
+//     for (String flowKey : flowMap.keySet()) {
+//         collectTableIdsFromFlow(flowKey, flowMap, tableIds, visitedFlows,fields);
+//     }
+
+//     return tableIds;
+// }
+
+// private static void collectTableIdsFromFlow(
+//         String key,Map<String, List<Flow>> flowMap, 
+//         Set<String> tableIds,Set<String> visitedFlows, Map<String, Field> fields) {
+
+//     List<Flow> flows = flowMap.get(key);
+
+//     if (flows == null || visitedFlows.contains(key)) {
+//         return;
+//     }
+
+//     visitedFlows.add(key);
+
+//     for (Flow flow : flows) {
+//         for (int i = 0; i < flow.getSource().size(); i++) {
+//             String sourceType = flow.getSourceType().get(i);
+//             String source = flow.getSource().get(i);
+
+//             if ("field".equals(sourceType)) {
+//                 Field field = fields.get(source);
+//                 tableIds.add(field.getTableId());
+//             } else if ("flow".equals(sourceType)) {
+//                 collectTableIdsFromFlow(source, flowMap, tableIds, visitedFlows,fields);
+//             }
+//         }
+//     }
+// }
+
 
 }

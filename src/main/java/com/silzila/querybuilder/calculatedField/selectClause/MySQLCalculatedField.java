@@ -5,6 +5,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 
 import com.silzila.dto.DatasetDTO;
 import com.silzila.exception.BadRequestException;
@@ -87,10 +89,9 @@ public class MySQLCalculatedField {
             }
 
             resolveFlowDependencies(flowMap, flowForConditionFilter);
-            procesFlowReqruiredForCondition(flowForConditionFilter, flowMap, fields, flowStringMap, conditionFilterStringMap);
-            processConditionFilters(conditionFilterMap, fields, flowStringMap, conditionFilterStringMap);
-            processFlows(flowForConditionFilter, flowMap, fields, flowStringMap, conditionFilterStringMap);
-        
+            procesFlowReqruiredForCondition(flowForConditionFilter, flowMap, fields, flowStringMap, conditionFilterStringMap,flowKey);
+            processConditionFilters(conditionFilterMap, fields,flowMap, flowStringMap, conditionFilterStringMap);
+            processFlows(flowForConditionFilter, flowMap, fields, flowStringMap, conditionFilterStringMap,flowKey);
             return calculatedField.append(flowStringMap.get(flowKey)).toString();
         }
 
@@ -144,37 +145,46 @@ public class MySQLCalculatedField {
 
         //if the condition filters has flow - add to flowForConditionFilter
         private static void addFlowFromOperand(List<String> operandType, List<String> operand, List<String> flowForConditionFilter) {
-            if (operandType != null && operandType.get(0).equals("flow")) {
+            if (operandType != null && operandType.get(0).equals("flow")&&!flowForConditionFilter.contains(operand.get(0))) {
                 flowForConditionFilter.add(operand.get(0));
             }
         }
 
         // if the flow required for a condition filter , has sourcetype flow
         private static void resolveFlowDependencies(Map<String, List<Flow>> flowMap, List<String> flowForConditionFilter) {
-            if (!flowForConditionFilter.isEmpty()) {
-                for (int i = 0; i < flowForConditionFilter.size(); i++) {
-                    String key = flowForConditionFilter.get(i);
-                    List<Flow> flows = flowMap.get(key);
+            Set<String> processedKeys = new HashSet<>(flowForConditionFilter); 
+            int i = 0;
+        
+            while (i < flowForConditionFilter.size()) {
+                String key = flowForConditionFilter.get(i);
+                List<Flow> flows = flowMap.get(key);
+                
+                if (flows != null) {
                     flows.forEach(flow -> {
                         for (int j = 0; j < flow.getSource().size(); j++) {
                             if (flow.getSourceType().get(j).equals("flow")) {
-                                flowForConditionFilter.add(0, flow.getSource().get(j));
+                                String newKey = flow.getSource().get(j);
+                                if (processedKeys.add(newKey)) { // Only add if not already processed
+                                    flowForConditionFilter.add(newKey);
+                                }
                             }
                         }
                     });
                 }
+                i++;
             }
         }
 
         private static void processConditionFilters(Map<String, List<ConditionFilter>> conditionFilterMap,
                                                     Map<String, Field> fields,
+                                                    Map<String, List<Flow>> flows,
                                                     Map<String, String> flowStringMap,
                                                     Map<String, String> conditionFilterStringMap) {
             if (conditionFilterMap != null && !conditionFilterMap.isEmpty()) {
                 conditionFilterMap.forEach((key, conditionFilters) -> {
                     conditionFilters.forEach(conditionFilter -> {
                         List<Filter> filters = ConditionFilterToFilter.mapConditionFilterToFilter(
-                                conditionFilter.getConditions(), fields, flowStringMap);
+                                conditionFilter.getConditions(), fields,flows, flowStringMap);
                         try {
                             String conditionString = WhereClause.filterPanelWhereString(
                                     filters, conditionFilter.getShouldAllConditionsMatch(), "mysql");
@@ -193,7 +203,8 @@ public class MySQLCalculatedField {
                                                             Map<String, List<Flow>> flowMap,
                                                             Map<String, Field> fields,
                                                             Map<String, String> flowStringMap,
-                                                            Map<String, String> conditionFilterStringMap) {
+                                                            Map<String, String> conditionFilterStringMap,
+                                                            String lastKey) {
 
                     flowForConditionFilter.forEach(flowKey -> {
                     List<Flow> flows = flowMap.get(flowKey);
@@ -201,8 +212,8 @@ public class MySQLCalculatedField {
             
                     if (firstFlow.getCondition() != null) {
                         processConditionalFlow(flows, flowStringMap, conditionFilterStringMap, fields, flowKey);
-                    } else if (basicMathOperations.containsKey(firstFlow.getFlow())){
-                        processNonConditionalMathFlow(firstFlow, fields, flowStringMap, flowKey);
+                    } else if (basicMathOperations.containsKey(firstFlow.getFlow()) || firstFlow.getIsAggregation()){
+                        processNonConditionalMathFlow(firstFlow, fields, flowStringMap, flowKey,lastKey);
                     }
                     else if (basicTextOperations.containsKey(firstFlow.getFlow())){
                         processNonConditionalTextFlow(firstFlow, fields, flowStringMap, flowKey);
@@ -217,7 +228,8 @@ public class MySQLCalculatedField {
                                          Map<String, List<Flow>> flowMap,
                                          Map<String, Field> fields,
                                          Map<String, String> flowStringMap,
-                                         Map<String, String> conditionFilterStringMap) {
+                                         Map<String, String> conditionFilterStringMap,
+                                         String lastKey) {
 
             flowMap.forEach((flowKey,flows) -> {
 
@@ -225,8 +237,8 @@ public class MySQLCalculatedField {
 
                 if (firstFlow.getCondition() != null) {
                     processConditionalFlow(flows, flowStringMap, conditionFilterStringMap, fields, flowKey);
-                } else if (basicMathOperations.containsKey(firstFlow.getFlow())){
-                    processNonConditionalMathFlow(firstFlow, fields, flowStringMap, flowKey);
+                } else if (basicMathOperations.containsKey(firstFlow.getFlow()) || firstFlow.getIsAggregation()){
+                    processNonConditionalMathFlow(firstFlow, fields, flowStringMap, flowKey,lastKey);
                 }
                 else if (basicTextOperations.containsKey(firstFlow.getFlow())){
                     processNonConditionalTextFlow(firstFlow, fields, flowStringMap, flowKey);
@@ -275,7 +287,8 @@ public class MySQLCalculatedField {
         private static void processNonConditionalMathFlow(Flow flow,
                                                           Map<String, Field> fields,
                                                           Map<String, String> flowStringMap,
-                                                          String flowKey) {
+                                                          String flowKey,
+                                                          String lastKey) {
             List<String> result = new ArrayList<>();
             List<String> source = flow.getSource();
             List<String> sourceType = flow.getSourceType();
@@ -283,42 +296,49 @@ public class MySQLCalculatedField {
 
             if (basicMathOperations.containsKey(flowType)) {
                 if (List.of("addition", "subtraction", "multiplication", "division").contains(flowType)) {
-                    processMathBasicOperations(flow, fields, flowStringMap, result, flowKey, source, sourceType);
+                    processMathBasicOperations(flow, fields, flowStringMap, result, flowKey, source, sourceType ,lastKey);
                 } else if (List.of("ceiling", "floor", "absolute").contains(flowType)) {
-                    processMathSingleArgumentOperations(flow, fields, flowStringMap, flowKey, source, sourceType);
+                    processMathSingleArgumentOperations(flow, fields, flowStringMap, flowKey, source, sourceType,lastKey);
                 } else if (List.of("min", "max").contains(flowType)) {
-                    processMultipleArgumentOperations(flow, fields, flowStringMap, flowKey, result, source, sourceType);
+                    processMultipleArgumentOperations(flow, fields, flowStringMap, flowKey, result, source, sourceType,lastKey);
                 } else if ("power".equals(flowType)) {
-                    processPowerOperation(flow, fields, flowStringMap, flowKey, source, sourceType);
+                    processPowerOperation(flow, fields, flowStringMap, flowKey, source, sourceType,lastKey);
                 }
+            }
+            else if(!basicMathOperations.containsKey(flowType) && flow.getIsAggregation()){
+                processAggregation(flow,"", sourceType.get(0), source.get(0), fields, flowStringMap, flowKey, lastKey, false);
             }
         }
 
         // to process math basic operations - addition, subtraction, multiplicattion, division
         private static void processMathBasicOperations(Flow flow, Map<String, Field> fields, Map<String, String> flowStringMap,
-                                                       List<String> result,String flowKey,List<String> source,List<String> sourceType) {
+                                                       List<String> result,String flowKey,List<String> source,List<String> sourceType, String lastKey) {
             for (int i = 0; i < source.size(); i++) {
-                String processedSource = getMathProcessedSource(source.get(i), sourceType.get(i), fields, flowStringMap, flow, i);
+                String processedSource = getMathProcessedSource(source.get(i), sourceType.get(i), fields, flowStringMap, flow, i,flowKey,lastKey);
                 result.add(processedSource);
                 if (i < source.size() - 1) {
                     result.add(basicMathOperations.get(flow.getFlow()));
                 }
             }
-            flowStringMap.put(flowKey, String.join(" ", result));
+            String mathematicalExpression = String.join(" ", result);
+            if(flow.getIsAggregation() && !flowKey.equals(lastKey)){
+                mathematicalExpression = processAggregation(flow, mathematicalExpression, "agg", null, fields, flowStringMap, flowKey, lastKey, true);
+            }
+            flowStringMap.put(flowKey, mathematicalExpression);
         }
 
         // to procees math single argument operations - absolute,ceiling,floor
         private static void processMathSingleArgumentOperations(Flow flow, Map<String, Field> fields, Map<String, String> flowStringMap,
-                                                                String flowKey,List<String> source, List<String> sourceType) {
-            String processedSource = getMathProcessedSource(source.get(0), sourceType.get(0), fields, flowStringMap, flow, 0);
+                                                                String flowKey,List<String> source, List<String> sourceType, String lastKey) {
+            String processedSource = getMathProcessedSource(source.get(0), sourceType.get(0), fields, flowStringMap, flow, 0,flowKey,lastKey);
             flowStringMap.put(flowKey, basicMathOperations.get(flow.getFlow()) + "(" + processedSource + ")");
         }
 
         // to procees math multiple argument operations - minimum and maximum
         private static void processMultipleArgumentOperations(Flow flow, Map<String, Field> fields, Map<String, String> flowStringMap,
-                                                              String flowKey,List<String> result, List<String> source, List<String> sourceType) {
+                                                              String flowKey,List<String> result, List<String> source, List<String> sourceType, String lastKey) {
             for (int i = 0; i < source.size(); i++) {
-                String processedSource = getMathProcessedSource(source.get(i), sourceType.get(i), fields, flowStringMap, flow, i);
+                String processedSource = getMathProcessedSource(source.get(i), sourceType.get(i), fields, flowStringMap, flow, i,flowKey,lastKey);
                 result.add(processedSource);
                 if (i < source.size() - 1) {
                     result.add(",");
@@ -330,38 +350,67 @@ public class MySQLCalculatedField {
         // To process the power operation
         // 1st source - base value, 2nd source - exponent value
         private static void processPowerOperation(Flow flow, Map<String, Field> fields, Map<String, String> flowStringMap,
-                                                  String flowKey,List<String> source, List<String> sourceType) {
-            String processedSource = getMathProcessedSource(source.get(0), sourceType.get(0), fields, flowStringMap, flow, 0);
+                                                  String flowKey,List<String> source, List<String> sourceType, String lastKey) {
+            String processedSource = getMathProcessedSource(source.get(0), sourceType.get(0), fields, flowStringMap, flow, 0,flowKey,lastKey);
             flowStringMap.put(flowKey, basicMathOperations.get(flow.getFlow()) + "(" + processedSource + "," + source.get(1) + ")");
         }
 
         // to get a list of source with and without aggregation
         private static String getMathProcessedSource(String source, String sourceType,
-                                                     Map<String, Field> fields, Map<String, String> flowStringMap, Flow flow, int index) {
-            String processedSource = "";
-            if ("field".equals(sourceType)) {
-                Field field = fields.get(source);
-                processedSource = field.getTableId() + "." + field.getFieldName();
-            } else if ("flow".equals(sourceType)) {
-                processedSource = flowStringMap.get(source);
-            } else {
-                processedSource = source;
+                                             Map<String, Field> fields, Map<String, String> flowStringMap, Flow flow, int index,String flowKey,String lastKey) {
+        String processedSource = "";
+        if ("field".equals(sourceType)) {
+            Field field = fields.get(source);
+            processedSource = field.getTableId() + "." + field.getFieldName();
+        } else if ("flow".equals(sourceType)) {
+            processedSource = flowStringMap.get(source);
+        } else {
+            processedSource = source;
+        }
+
+        if (flow.getIsAggregation()) {
+            processedSource = flow.getAggregation().get(index) + "(" + processedSource + ")";
+        }
+        return processedSource;
+        }
+
+        
+    private static String processAggregation(Flow flow, String processedSource, String sourceType, 
+    String source, Map<String, Field> fields,Map<String,String> flowStringMap,String flowKey, String lastKey, Boolean isAggregatedWithBasicMath) {
+
+            if(!isAggregatedWithBasicMath){
+            processedSource = getMathProcessedSource(source, sourceType, fields, flowStringMap, flow, 0, flowKey, lastKey);
             }
 
-            if (flow.getIsAggregation()) {
-                processedSource = flow.getAggregation().get(index) + "(" + processedSource + ")";
-                if("field".equals(sourceType)){
-                Field field = fields.get(source);
-                try {
-                    String fromClause = RelationshipClauseGeneric.buildRelationship(Collections.singletonList(field.getTableId()),threadLocalDatasetDTO.get().getDataSchema(), "postgresql");
-                    processedSource = "(SELECT " + processedSource + " FROM " + fromClause + ")";
-                } catch (BadRequestException e) {
-                    System.out.println(e.getMessage());
-                } 
+            if (!flowKey.equals(lastKey)) {
+            try {
+            String fromClause = "";
+
+            if ("field".equals(sourceType)) {
+            Field field = fields.get(source);
+            fromClause = RelationshipClauseGeneric.buildRelationship(
+            Collections.singletonList(field.getTableId()), 
+            threadLocalDatasetDTO.get().getDataSchema(), 
+            "mysql"
+            );
+            } else if ("flow".equals(sourceType) || isAggregatedWithBasicMath) {
+            fromClause = RelationshipClauseGeneric.buildRelationship(
+            ColumnListFromClause.getColumnListFromFields(fields), 
+            threadLocalDatasetDTO.get().getDataSchema(), 
+            "mysql"
+            );
             }
+
+            processedSource = "(SELECT " + processedSource + " FROM " + fromClause + ")";
+            } catch (BadRequestException e) {
+            System.out.println(e.getMessage());
+            }
+            }
+            if(!isAggregatedWithBasicMath){
+            flowStringMap.put(flowKey, processedSource);
             }
             return processedSource;
-        }
+            }
 
         private static String processNonConditionalTextFlow(Flow firstFlow, Map<String, Field> fields, Map<String, String> flowStringMap, String flowKey) {
             String flowType = firstFlow.getFlow();

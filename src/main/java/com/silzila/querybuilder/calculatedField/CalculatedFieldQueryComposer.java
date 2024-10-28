@@ -12,7 +12,7 @@ import com.silzila.payload.request.CalculatedFieldRequest;
 @Component
 public class CalculatedFieldQueryComposer {
 
-    public String composeQuery(List<CalculatedFieldRequest> requests, String vendor){
+    public String composeQuery(List<CalculatedFieldRequest> requests, String vendor)throws BadRequestException{
 
         QueryBuilder queryBuilder = QueryBuilderFactory.getQueryBuilder(vendor);
 
@@ -26,7 +26,7 @@ public class CalculatedFieldQueryComposer {
         return queryBuilder.buildSampleRecordQuery(request,datasetDTO,recordCount);
     }
 
-    public String composeQuery(CalculatedFieldRequest calculatedFieldRequest, String vendor){
+    public String composeQuery(CalculatedFieldRequest calculatedFieldRequest, String vendor)throws BadRequestException{
 
         QueryBuilder queryBuilder = QueryBuilderFactory.getQueryBuilder(vendor);
 

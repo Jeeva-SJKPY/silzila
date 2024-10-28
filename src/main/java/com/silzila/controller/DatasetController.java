@@ -139,7 +139,7 @@ public class DatasetController {
     @GetMapping("calculated-field/{vendor}")
     public String calculatedField(@RequestHeader Map<String, String> reqHeader, 
         @Valid @RequestBody List<CalculatedFieldRequest> request,
-        @PathVariable String vendor){
+        @PathVariable String vendor)throws BadRequestException{
             System.out.println("Request " + request);
             return datasetService.calculatedFiled(request, vendor);
         }

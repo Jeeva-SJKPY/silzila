@@ -11,12 +11,12 @@ public class PostgresSQLQueryBuilder implements QueryBuilder{
     
     //call postgres select class
     @Override
-    public String build(List<CalculatedFieldRequest> requests) {
+    public String build(List<CalculatedFieldRequest> requests) throws BadRequestException {
         return PostgresCalculatedField.calculatedFieldsComposed(requests);
     }
 
     @Override
-    public String build(CalculatedFieldRequest request) {
+    public String build(CalculatedFieldRequest request) throws BadRequestException {
         return PostgresCalculatedField.calculatedFieldComposed(request);
     }
 

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.silzila.exception.BadRequestException;
 import com.silzila.payload.request.Field;
 import com.silzila.payload.request.Flow;
 
@@ -13,7 +14,7 @@ public class PostgresDateFlow {
 
     private static Map<String,String> dateOperations = Map.of("currentDate", "CURRENT_DATE","currentTimestamp","NOW()","minDate","MIN","maxDate","MAX");
 
-    public static String postgresDateFlow(Flow flow, Map<String, Field> fields, Map<String, String> flowStringMap, String flowKey){
+    public static String postgresDateFlow(Flow flow, Map<String, Field> fields, Map<String, String> flowStringMap, String flowKey) throws BadRequestException{
         return switch(flow.getFlow()) {
             case "stringToDate" -> stringToDateConversion(flow, fields, flowStringMap);
             case "addDateInterval" -> addDateInterval(flow, fields, flowStringMap);
@@ -28,7 +29,11 @@ public class PostgresDateFlow {
     
     // to process string to date conversion
     //1st source -> string, 2nd source -> date format
-    private static String stringToDateConversion(Flow flow,Map<String, Field> fields,Map<String, String> flowStringMap){
+    private static String stringToDateConversion(Flow flow,Map<String, Field> fields,Map<String, String> flowStringMap) throws BadRequestException{
+
+        if (flow.getSource().size() != 2) {
+            throw new BadRequestException("Invalid parameters: String to date operation requires exactly two parameters (field,date format).");
+        }
 
         StringBuilder result = new StringBuilder();
 
@@ -41,7 +46,11 @@ public class PostgresDateFlow {
 
     // add a interval to a date
     //1st source -> field or date, 2nd source -> number of date part , 3rd source -> date part(year,month,week,day) 
-    private static String addDateInterval(Flow flow,Map<String, Field> fields,Map<String, String> flowStringMap){
+    private static String addDateInterval(Flow flow,Map<String, Field> fields,Map<String, String> flowStringMap) throws BadRequestException{
+
+        if (flow.getSource().size() != 3) {
+            throw new BadRequestException("Invalid parameters: add date interval operation requires exactly three parameters.");
+        }
 
         StringBuilder result = new StringBuilder();
 
@@ -54,7 +63,12 @@ public class PostgresDateFlow {
 
     // difference between two dates
     //1st source -> field or date, 2nd source -> field or date , 3rd source -> result count in date part(year,month,week,day)
-    private static String calculateDateInterval(Flow flow,Map<String, Field> fields,Map<String, String> flowStringMap){
+    private static String calculateDateInterval(Flow flow,Map<String, Field> fields,Map<String, String> flowStringMap) throws BadRequestException{
+
+        
+        if (flow.getSource().size() != 3) {
+            throw new BadRequestException("Invalid parameters: date interval operation requires exactly three parameters (field,string,string).");
+        }
 
         List<String> processedSource = processDateSources(flow, fields, flowStringMap);
 
@@ -76,7 +90,11 @@ public class PostgresDateFlow {
 
     //to get the name of the date part 
     //1st source -> field or date, 2nd source -> date part(month,day) 
-    private static String getDatePartName(Flow flow,Map<String, Field> fields,Map<String, String> flowStringMap){
+    private static String getDatePartName(Flow flow,Map<String, Field> fields,Map<String, String> flowStringMap) throws BadRequestException{
+        
+        if (flow.getSource().size() != 2) {
+            throw new BadRequestException("Invalid parameters: date partname operation requires exactly two parameters.");
+        }
 
         StringBuilder result = new StringBuilder();
 
@@ -89,7 +107,12 @@ public class PostgresDateFlow {
 
     //to get the number of the date part 
     //1st source -> field or date, 2nd source -> date part(year,month,day) 
-    private static String getDatePartNumber(Flow flow,Map<String, Field> fields,Map<String, String> flowStringMap){
+    private static String getDatePartNumber(Flow flow,Map<String, Field> fields,Map<String, String> flowStringMap) throws BadRequestException{
+
+        
+        if (flow.getSource().size() != 2) {
+            throw new BadRequestException("Invalid parameters: Text replace operation requires exactly two parameters.");
+        }
 
         StringBuilder result = new StringBuilder();
 
@@ -102,7 +125,11 @@ public class PostgresDateFlow {
 
     //to truncate a date to a desired date part
     //1st source -> field or date, 2nd source -> date part(year,month,week) 
-    private static String getTruncateDateToPart(Flow flow,Map<String, Field> fields,Map<String, String> flowStringMap){
+    private static String getTruncateDateToPart(Flow flow,Map<String, Field> fields,Map<String, String> flowStringMap) throws BadRequestException{
+        
+        if (flow.getSource().size() != 2) {
+            throw new BadRequestException("Invalid parameters: Text replace operation requires exactly two parameters.");
+        }
 
         StringBuilder result = new StringBuilder();
 
@@ -121,7 +148,7 @@ public class PostgresDateFlow {
     }
 
     //to get a min or max 
-    private static String getMinOrMaxOfColumn(Flow flow,Map<String, Field> fields,Map<String, String> flowStringMap){
+    private static String getMinOrMaxOfColumn(Flow flow,Map<String, Field> fields,Map<String, String> flowStringMap) throws BadRequestException{
 
         List<String> processedSource = processDateSources(flow, fields, flowStringMap);
 
@@ -130,7 +157,7 @@ public class PostgresDateFlow {
     }
 
     // to process a date sources
-    private static List<String> processDateSources(Flow firstFlow, Map<String, Field> fields, Map<String, String> flowStringMap) {
+    private static List<String> processDateSources(Flow firstFlow, Map<String, Field> fields, Map<String, String> flowStringMap) throws BadRequestException {
         List<String> source = firstFlow.getSource();
         List<String> sourceType = firstFlow.getSourceType();
         List<String> resultString = new ArrayList<>();
@@ -141,11 +168,17 @@ public class PostgresDateFlow {
     
             if ("field".equals(type)) {
                 Field field = fields.get(sourceElement);
+                if(field==null){
+                    throw new BadRequestException("No such a field with an id:" + sourceElement);
+                }
                 resultString.add(field.getTableId() + "." + field.getFieldName());
             } else if ("flow".equals(type)) {
-                resultString.add(flowStringMap.get(sourceElement));
+                String sourceFlowValue = flowStringMap.get(sourceElement);
+                if(sourceFlowValue == null || sourceFlowValue.isEmpty()){
+                    throw new BadRequestException("No such a flow with an id:" + sourceElement);
+                }
+                resultString.add(sourceFlowValue);
             } else {
-
                 resultString.add("'"+sourceElement+"'");
             }
         }

@@ -589,7 +589,7 @@ public class DatasetService {
     }
 
     //testing
-    public String calculatedFiled(List<CalculatedFieldRequest> requests, String vendor){
+    public String calculatedFiled(List<CalculatedFieldRequest> requests, String vendor)throws BadRequestException{
         return  calculatedFieldQueryComposer.composeQuery(requests, vendor);
     }
 

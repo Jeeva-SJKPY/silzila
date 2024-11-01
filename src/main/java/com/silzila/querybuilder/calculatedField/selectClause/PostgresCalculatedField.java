@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import com.silzila.dto.DatasetDTO;
@@ -89,10 +90,10 @@ public class PostgresCalculatedField {
             flowKey = key;  
         }
 
-        resolveFlowDependencies(flowMap, flowForConditionFilter);
-        procesFlowReqruiredForCondition(flowForConditionFilter, flowMap, fields, flowStringMap, conditionFilterStringMap,flowKey);
-        processConditionFilters(conditionFilterMap, fields,flowMap, flowStringMap, conditionFilterStringMap);
-        processFlows(flowForConditionFilter, flowMap, fields, flowStringMap, conditionFilterStringMap,flowKey);
+        // resolveFlowDependencies(flowMap, flowForConditionFilter);
+        // procesFlowReqruiredForCondition(flowForConditionFilter, flowMap, fields, flowStringMap, conditionFilterStringMap,flowKey);
+        //processConditionFilters(conditionFilterMap, fields,flowMap, flowStringMap, conditionFilterStringMap);
+        processFlows(flowForConditionFilter, flowMap, fields, flowStringMap,conditionFilterMap,conditionFilterStringMap,flowKey);
     
         return calculatedField.append(flowStringMap.get(flowKey)).toString();
     }
@@ -154,83 +155,118 @@ public class PostgresCalculatedField {
     }
     
     // if the flow required for a condition filter , has sourcetype flow 
-    private static void resolveFlowDependencies(Map<String, List<Flow>> flowMap, List<String> flowForConditionFilter) {
-        Set<String> processedKeys = new HashSet<>(flowForConditionFilter); 
-        int i = 0;
+    // private static void resolveFlowDependencies(Map<String, List<Flow>> flowMap, List<String> flowForConditionFilter) {
+    //     Set<String> processedKeys = new HashSet<>(flowForConditionFilter); 
+    //     int i = 0;
     
-        while (i < flowForConditionFilter.size()) {
-            String key = flowForConditionFilter.get(i);
-            List<Flow> flows = flowMap.get(key);
+    //     while (i < flowForConditionFilter.size()) {
+    //         String key = flowForConditionFilter.get(i);
+    //         List<Flow> flows = flowMap.get(key);
             
-            if (flows != null) { // Check for null to avoid potential NPE
-                flows.forEach(flow -> {
-                    for (int j = 0; j < flow.getSource().size(); j++) {
-                        if (flow.getSourceType().get(j).equals("flow")) {
-                            String newKey = flow.getSource().get(j);
-                            if (processedKeys.add(newKey)) { // Only add if not already processed
-                                flowForConditionFilter.add(newKey);
-                            }
-                        }
-                    }
-                });
-            }
-            i++;
-        }
-    }
+    //         if (flows != null) { // Check for null to avoid potential NPE
+    //             flows.forEach(flow -> {
+    //                 for (int j = 0; j < flow.getSource().size(); j++) {
+    //                     if (flow.getSourceType().get(j).equals("flow")) {
+    //                         String newKey = flow.getSource().get(j);
+    //                         if (processedKeys.add(newKey)) { // Only add if not already processed
+    //                             flowForConditionFilter.add(newKey);
+    //                         }
+    //                     }
+    //                 }
+    //             });
+    //         }
+    //         i++;
+    //     }
+    // }
     
 
-    private static void processConditionFilters(Map<String, List<ConditionFilter>> conditionFilterMap,
-                                                Map<String, Field> fields,
-                                                Map<String, List<Flow>> flows,
-                                                Map<String, String> flowStringMap,
-                                                Map<String, String> conditionFilterStringMap) {
-        if (conditionFilterMap != null && !conditionFilterMap.isEmpty()) {
-            conditionFilterMap.forEach((key, conditionFilters) -> {
-                conditionFilters.forEach(conditionFilter -> {
-                    List<Filter> filters = ConditionFilterToFilter.mapConditionFilterToFilter(
-                            conditionFilter.getConditions(), fields,flows, flowStringMap);
-                    try {
-                        String conditionString = WhereClause.filterPanelWhereString(
-                                filters, conditionFilter.getShouldAllConditionsMatch(), "postgresql");
-                        conditionFilterStringMap.put(key, conditionString);
-                    } catch (BadRequestException e) {
-                        e.printStackTrace();
-                    }
-                });
-            });
-        }
-    }
-    
-    
-    // to process flow required for a condition filters
-    private static void procesFlowReqruiredForCondition(List<String> flowForConditionFilter,
-                                     Map<String, List<Flow>> flowMap,
-                                     Map<String, Field> fields,
-                                     Map<String, String> flowStringMap,
-                                     Map<String, String> conditionFilterStringMap,
-                                     String lastKey) throws BadRequestException {
-    
-        for (String flowKey : flowForConditionFilter) {
-        List<Flow> flows = flowMap.get(flowKey);
-        Flow firstFlow = flows.get(0);
+    // private static void processConditionFilters(Map<String, List<ConditionFilter>> conditionFilterMap,
+    //                                             Map<String, Field> fields,
+    //                                             Map<String, List<Flow>> flows,
+    //                                             Map<String, String> flowStringMap,
+    //                                             Map<String, String> conditionFilterStringMap) {
+    //     if (conditionFilterMap != null && !conditionFilterMap.isEmpty()) {
+    //         conditionFilterMap.forEach((key, conditionFilters) -> {
+    //             conditionFilters.forEach(conditionFilter -> {
+    //                 List<Filter> filters = ConditionFilterToFilter.mapConditionFilterToFilter(
+    //                         conditionFilter.getConditions(), fields,flows, flowStringMap);
+    //                 try {
+    //                     String conditionString = WhereClause.filterPanelWhereString(
+    //                             filters, conditionFilter.getShouldAllConditionsMatch(), "postgresql");
+    //                     conditionFilterStringMap.put(key, conditionString);
+    //                 } catch (BadRequestException e) {
+    //                     e.printStackTrace();
+    //                 }
+    //             });
+    //         });
+    //     }
+    // }
 
-        if (firstFlow.getCondition() != null) {
-            processConditionalFlow(flows, flowStringMap, conditionFilterStringMap, fields, flowKey);
-        } else if (basicMathOperations.containsKey(firstFlow.getFlow()) || firstFlow.getIsAggregation()) {
-            processNonConditionalMathFlow(firstFlow, fields, flowStringMap, flowKey, lastKey);
-        } else if (basicTextOperations.containsKey(firstFlow.getFlow())) {
-            processNonConditionalTextFlow(firstFlow, fields, flowStringMap, flowKey);
-        } else {
-            processNonConditionalDateFlow(firstFlow, fields, flowStringMap, flowKey);
+    private static String processConditionFilter(Map<String, List<ConditionFilter>> conditionFilterMap,
+                                             Map<String, Field> fields,
+                                             Map<String, List<Flow>> flows,
+                                             Map<String, String> flowStringMap,
+                                             Map<String, String> conditionFilterStringMap,
+                                             String key) throws BadRequestException {
+    if (conditionFilterMap == null || conditionFilterMap.isEmpty() || !conditionFilterMap.containsKey(key)) {
+        return "";
+    }
+
+    StringBuilder conditionStringBuilder = new StringBuilder();
+    List<ConditionFilter> conditionFilters = conditionFilterMap.get(key);
+
+    for (ConditionFilter conditionFilter : conditionFilters) {
+        List<Filter> filters = ConditionFilterToFilter.mapConditionFilterToFilter(
+                conditionFilter.getConditions(), fields, flows, flowStringMap);
+
+        String whereClause = WhereClause.filterPanelWhereString(
+                filters, conditionFilter.getShouldAllConditionsMatch(), "postgresql");
+
+        // Append this whereClause to the builder and add a separator if needed
+        if (conditionStringBuilder.length() > 0) {
+            conditionStringBuilder.append(" AND "); // or " OR " depending on logic
         }
+        conditionStringBuilder.append(whereClause);
+
+        // Store the computed string in the conditionFilterStringMap
+        conditionFilterStringMap.put(key, conditionStringBuilder.toString());
     }
-    }
+
+    return conditionStringBuilder.toString();
+}
+
+    
+    
+    // // to process flow required for a condition filters
+    // private static void procesFlowReqruiredForCondition(List<String> flowForConditionFilter,
+    //                                  Map<String, List<Flow>> flowMap,
+    //                                  Map<String, Field> fields,
+    //                                  Map<String, String> flowStringMap,
+    //                                  Map<String, String> conditionFilterStringMap,
+    //                                  String lastKey) throws BadRequestException {
+    
+    //     for (String flowKey : flowForConditionFilter) {
+    //     List<Flow> flows = flowMap.get(flowKey);
+    //     Flow firstFlow = flows.get(0);
+
+    //     if (firstFlow.getCondition() != null) {
+    //         processConditionalFlow(flows, flowStringMap, conditionFilterStringMap, fields, flowKey);
+    //     } else if (basicMathOperations.containsKey(firstFlow.getFlow()) || firstFlow.getIsAggregation()) {
+    //         processNonConditionalMathFlow(firstFlow, fields, flowStringMap, flowKey, lastKey);
+    //     } else if (basicTextOperations.containsKey(firstFlow.getFlow())) {
+    //         processNonConditionalTextFlow(firstFlow, fields, flowStringMap, flowKey);
+    //     } else {
+    //         processNonConditionalDateFlow(firstFlow, fields, flowStringMap, flowKey);
+    //     }
+    // }
+    // }
 
     // to process flows
     private static void processFlows(List<String> flowForConditionFilter,
                                  Map<String, List<Flow>> flowMap,
                                  Map<String, Field> fields,
                                  Map<String, String> flowStringMap,
+                                 Map<String, List<ConditionFilter>> conditionFilterMap,
                                  Map<String, String> conditionFilterStringMap,
                                  String lastKey) throws BadRequestException {
 
@@ -239,8 +275,8 @@ public class PostgresCalculatedField {
         List<Flow> flows = entry.getValue();
         Flow firstFlow = flows.get(0);
 
-        if (firstFlow.getCondition() != null) {
-            processConditionalFlow(flows, flowStringMap, conditionFilterStringMap, fields, flowKey);
+        if (firstFlow.getCondition() != null) { 
+            processConditionalFlow(flows,flowMap,flowStringMap,conditionFilterMap,conditionFilterStringMap, fields, flowKey);
         } else if (basicMathOperations.containsKey(firstFlow.getFlow()) || firstFlow.getIsAggregation()) {
             processNonConditionalMathFlow(firstFlow, fields, flowStringMap, flowKey, lastKey);
         } else if (basicTextOperations.containsKey(firstFlow.getFlow())) {
@@ -253,7 +289,9 @@ public class PostgresCalculatedField {
 
     
     private static void processConditionalFlow(List<Flow> flows,
+                                        Map<String, List<Flow>> flowMap,
                                         Map<String, String> flowStringMap,
+                                        Map<String, List<ConditionFilter>> conditionFilterMap,
                                         Map<String, String> conditionFilterStringMap,
                                         Map<String, Field> fields,
                                         String flowKey) throws BadRequestException {
@@ -262,7 +300,7 @@ public class PostgresCalculatedField {
 
             for (Flow flow : flows) {
             if ("if".equals(flow.getCondition()) || "elseif".equals(flow.getCondition())) {
-            caseQuery.append("WHEN ").append(conditionFilterStringMap.get(flow.getFilter())).append(" THEN ");
+            caseQuery.append("WHEN ").append(processConditionFilter(conditionFilterMap, fields, flowMap, flowStringMap, conditionFilterStringMap, flow.getFilter())).append(" THEN ");
             appendSourceToQuery(fields, flowStringMap, flow, caseQuery);
             } else if ("else".equals(flow.getCondition())) {
             caseQuery.append(" ELSE ");
@@ -345,10 +383,11 @@ public class PostgresCalculatedField {
             }
         }
         String mathematicalExpression = String.join(" ", result);
+        flowStringMap.put(flowKey, mathematicalExpression);
+        flowStringMap.put(flowKey+"@", mathematicalExpression);
         if(flow.getIsAggregation() && !flowKey.equals(lastKey)){
             mathematicalExpression = processAggregation(flow, mathematicalExpression, "agg", null, fields, flowStringMap, flowKey, lastKey, true);
         }
-        flowStringMap.put(flowKey, mathematicalExpression);
     }
 
     // to procees math single argument operations - absolute,ceiling,floor
@@ -396,9 +435,14 @@ public class PostgresCalculatedField {
             if(field== null){
                 throw new BadRequestException("No such a field with an id:" + flow.getSource().get(0));
             }
-            processedSource = field.getTableId() + "." + field.getFieldName();
+            processedSource = field.getTableId() + "." + field.getFieldName(); 
         } else if ("flow".equals(sourceType)) {
-            String sourceFlowValue = flowStringMap.get(source);
+            if(flow.getSourceType().contains("field") && !flowKey.equals(lastKey)){
+
+            }
+            String sourceKey = flow.getSourceType().contains("field") ? source + "@" : source;
+            String sourceFlowValue = Optional.ofNullable(flowStringMap.get(sourceKey))
+                                    .orElse(flowStringMap.get(source));
             if(sourceFlowValue == null || sourceFlowValue.isEmpty()){
                 throw new BadRequestException("No such a flow with an id:" + source);
             }
@@ -418,6 +462,7 @@ public class PostgresCalculatedField {
 
     if(!isAggregatedWithBasicMath){
         processedSource = getMathProcessedSource(source, sourceType, fields, flowStringMap, flow, 0, flowKey, lastKey);
+        flowStringMap.put(flowKey,processedSource);
     }
 
     if (!flowKey.equals(lastKey)) {
@@ -444,9 +489,9 @@ public class PostgresCalculatedField {
             System.out.println(e.getMessage());
         }
     }
-    if(!isAggregatedWithBasicMath){
-        flowStringMap.put(flowKey, processedSource);
-    }
+  
+        flowStringMap.put(flowKey+"@", processedSource);
+
     return processedSource;
 }
     private static String processNonConditionalTextFlow(Flow firstFlow, Map<String, Field> fields, Map<String, String> flowStringMap, String flowKey) throws BadRequestException {

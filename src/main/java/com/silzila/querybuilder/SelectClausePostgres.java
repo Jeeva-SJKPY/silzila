@@ -199,7 +199,10 @@ public class SelectClausePostgres {
                     )
                 ));
             }
-            if (List.of("TEXT", "BOOLEAN").contains(meas.getDataType().name())) {
+            if(meas.getIsCalculatedField() && meas.getCalculatedField().getIsAggregated()){
+                field = selectField;
+            }
+            else if (List.of("TEXT", "BOOLEAN").contains(meas.getDataType().name())) {
                 // checking ('count', 'countnn', 'countn', 'countu')
                 if (meas.getAggr().name().equals("COUNT")) {
                     field = "COUNT(*)";

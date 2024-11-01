@@ -26,7 +26,7 @@ public class ConditionFilterToFilter {
         if (leftOperandType.get(0).equals("field")) {
             setFieldFilter(leftOperand.get(0), filter, fields);
         } else if (leftOperandType.get(0).equals("flow")) {
-            setFlowFilter(leftOperand.get(0), filter, flowMap,fields,flows);
+            setFlowFilter(leftOperand.get(0),rightOperandType.get(0), filter, flowMap,fields,flows);
         } else {
             filter.setFieldName(leftOperand.get(0));
             filter.setIsField(false);
@@ -35,7 +35,7 @@ public class ConditionFilterToFilter {
         mapOperatorAndType(condition, filter);
         filter.setShouldExclude(condition.getShouldExclude());
         filter.setIsTillDate(condition.getIsTillDate());
-        filter.setUserSelection(buildUserSelection(rightOperand, rightOperandType, fields, flowMap));
+        filter.setUserSelection(buildUserSelection(rightOperand, rightOperandType,leftOperandType,fields, flowMap));
 
         filters.add(filter);
     });
@@ -55,8 +55,8 @@ private static void setFieldFilter(String leftOperand, Filter filter, Map<String
     filter.setTimeGrain(Filter.TimeGrain.fromValue(field.getTimeGrain()));
 }
 
-private static void setFlowFilter(String leftOperand, Filter filter, Map<String, String> flowMap, Map<String, Field> fields,Map<String, List<Flow>> flows) {
-    String flow = flowMap.get(leftOperand);
+private static void setFlowFilter(String leftOperand,String rightOperandType, Filter filter, Map<String, String> flowMap, Map<String, Field> fields,Map<String, List<Flow>> flows) {
+    String flow = rightOperandType.equals("field")? flowMap.get(leftOperand +"@"): flowMap.get(leftOperand) ;
     Flow flowType = flows.get(leftOperand).get(0);
     filter.setFieldName(flow);
     filter.setDataType(Filter.DataType.fromValue(DataTypeProvider.getDataType(flows, fields, flowType)));
@@ -81,7 +81,7 @@ private static void mapOperatorAndType(Condition condition, Filter filter) {
     }
 }
 
-private static List<String> buildUserSelection(List<String> rightOperand, List<String> rightOperandType, Map<String, Field> fields, Map<String, String> flowMap) {
+private static List<String> buildUserSelection(List<String> rightOperand, List<String> rightOperandType,List<String> leftOperAndType, Map<String, Field> fields, Map<String, String> flowMap) {
     List<String> userSelection = new ArrayList<>();
     if(rightOperand != null){
         for (int i = 0; i < rightOperand.size(); i++) {
@@ -91,9 +91,13 @@ private static List<String> buildUserSelection(List<String> rightOperand, List<S
                 Field field = fields.get(rightOp);
                 userSelection.add(field.getFieldName());
             } else if (rightOpType.equals("flow")) {
-                String flow = flowMap.get(rightOp);
+                String flow = leftOperAndType.contains("field")? flowMap.get(rightOp +"@"): flowMap.get(rightOp) ;
                 userSelection.add(flow);
-            } else {
+            }
+            else if (rightOpType.equals("text")) {
+                userSelection.add("'"+rightOp+ "'");
+            }
+            else {
                 userSelection.add(rightOp);
             }
         }

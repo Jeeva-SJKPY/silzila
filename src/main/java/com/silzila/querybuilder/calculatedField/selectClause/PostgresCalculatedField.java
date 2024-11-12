@@ -80,7 +80,8 @@ public class PostgresCalculatedField {
         Map<String, List<ConditionFilter>> conditionFilterMap = calculatedFieldRequest.getConditionFilters()!= null ?
                 calculatedFieldRequest.getConditionFilters() : new HashMap<>();
         Map<String, List<Flow>> flowMap = calculatedFieldRequest.getFlows();
-    
+
+        List<String> aggregatedFlow = new ArrayList<>();
         Map<String, String> conditionFilterStringMap = new HashMap<>();
         Map<String, String> flowStringMap = new HashMap<>();
         List<String> flowForConditionFilter = extractFlowForConditionFilters(conditionFilterMap);
@@ -93,7 +94,7 @@ public class PostgresCalculatedField {
         // resolveFlowDependencies(flowMap, flowForConditionFilter);
         // procesFlowReqruiredForCondition(flowForConditionFilter, flowMap, fields, flowStringMap, conditionFilterStringMap,flowKey);
         //processConditionFilters(conditionFilterMap, fields,flowMap, flowStringMap, conditionFilterStringMap);
-        processFlows(flowForConditionFilter, flowMap, fields, flowStringMap,conditionFilterMap,conditionFilterStringMap,flowKey);
+        processFlows(flowForConditionFilter, flowMap, fields, flowStringMap,conditionFilterMap,conditionFilterStringMap,flowKey,aggregatedFlow);
     
         return calculatedField.append(flowStringMap.get(flowKey)).toString();
     }
@@ -126,6 +127,23 @@ public class PostgresCalculatedField {
         String fromClause = RelationshipClauseGeneric.buildRelationship(allColumnList,datasetDTO.getDataSchema(),"postgresql");
 
         query.append("\nFROM ").append(fromClause) .append( "\nLIMIT ").append(recordCount);
+
+        return query.toString();
+        
+    }
+
+    public static String composeFilterOptionsQuery(CalculatedFieldRequest calculatedFieldRequest,DatasetDTO datasetDTO) throws BadRequestException{
+        StringBuilder query = new StringBuilder("SELECT DISTINCT \n\t");
+
+
+        query.append(calculatedFieldComposedWithAlias(calculatedFieldRequest));
+
+        List<String> allColumnList = (calculatedFieldRequest!=null) 
+                                         ? ColumnListFromClause.getColumnListFromFields(calculatedFieldRequest.getFields()) 
+                                         : new ArrayList<>();
+        String fromClause = RelationshipClauseGeneric.buildRelationship(allColumnList,datasetDTO.getDataSchema(),"postgresql");
+
+        query.append("\nFROM ").append(fromClause);
 
         return query.toString();
         
@@ -268,7 +286,7 @@ public class PostgresCalculatedField {
                                  Map<String, String> flowStringMap,
                                  Map<String, List<ConditionFilter>> conditionFilterMap,
                                  Map<String, String> conditionFilterStringMap,
-                                 String lastKey) throws BadRequestException {
+                                 String lastKey, List<String> aggregatedFlow) throws BadRequestException {
 
     for (Map.Entry<String, List<Flow>> entry : flowMap.entrySet()) {
         String flowKey = entry.getKey();
@@ -278,7 +296,7 @@ public class PostgresCalculatedField {
         if (firstFlow.getCondition() != null) { 
             processConditionalFlow(flows,flowMap,flowStringMap,conditionFilterMap,conditionFilterStringMap, fields, flowKey);
         } else if (basicMathOperations.containsKey(firstFlow.getFlow()) || firstFlow.getIsAggregation()) {
-            processNonConditionalMathFlow(firstFlow, fields, flowStringMap, flowKey, lastKey);
+            processNonConditionalMathFlow(firstFlow, fields, flowStringMap, flowKey, lastKey,aggregatedFlow);
         } else if (basicTextOperations.containsKey(firstFlow.getFlow())) {
             processNonConditionalTextFlow(firstFlow, fields, flowStringMap, flowKey);
         } else {
@@ -341,42 +359,43 @@ public class PostgresCalculatedField {
                                                   Map<String, Field> fields,
                                                   Map<String, String> flowStringMap,
                                                   String flowKey,
-                                                  String lastKey) throws BadRequestException {
+                                                  String lastKey, List<String> aggregatedFlow) throws BadRequestException {
     List<String> result = new ArrayList<>();
     List<String> source = flow.getSource();
     List<String> sourceType = flow.getSourceType();
     String flowType = flow.getFlow();
     
+    
     if (basicMathOperations.containsKey(flowType)) {
         if (List.of("addition", "subtraction", "multiplication", "division").contains(flowType)) {
             
-            processMathBasicOperations(flow, fields, flowStringMap, result, flowKey, source, sourceType,lastKey);
+            processMathBasicOperations(flow, fields, flowStringMap, result, flowKey, source, sourceType,lastKey,aggregatedFlow);
         } else if (List.of("ceiling", "floor", "absolute").contains(flowType)) {
             
-            processMathSingleArgumentOperations(flow, fields, flowStringMap, flowKey, source, sourceType,lastKey);
+            processMathSingleArgumentOperations(flow, fields, flowStringMap, flowKey, source, sourceType,lastKey,aggregatedFlow);
         } else if (List.of("min", "max").contains(flowType)) {
             
-            processMultipleArgumentOperations(flow, fields, flowStringMap, flowKey, result, source, sourceType,lastKey);
+            processMultipleArgumentOperations(flow, fields, flowStringMap, flowKey, result, source, sourceType,lastKey,aggregatedFlow);
         } else if ("power".equals(flowType)) {
             
-            processPowerOperation(flow, fields, flowStringMap, flowKey, source, sourceType,lastKey);
+            processPowerOperation(flow, fields, flowStringMap, flowKey, source, sourceType,lastKey,aggregatedFlow);
         }      
     }
     else if(!basicMathOperations.containsKey(flowType) && flow.getIsAggregation()){
-        processAggregation(flow,"", sourceType.get(0), source.get(0), fields, flowStringMap, flowKey, lastKey, false);
+        processAggregation(flow,"", sourceType.get(0), source.get(0), fields, flowStringMap, flowKey, lastKey, false,aggregatedFlow);
     }
 }
 
     // to process math basic operations - addition, subtraction, multiplicattion, division
     private static void processMathBasicOperations(Flow flow, Map<String, Field> fields, Map<String, String> flowStringMap,
-                                             List<String> result,String flowKey,List<String> source,List<String> sourceType, String lastKey) throws BadRequestException {
+                                             List<String> result,String flowKey,List<String> source,List<String> sourceType, String lastKey, List<String> aggregatedFlow) throws BadRequestException {
         
         if (source.size() < 2) {
         throw new BadRequestException("Insufficient parameters: at least two values are required for basic math operations.");
         }
 
         for (int i = 0; i < source.size(); i++) {
-            String processedSource = getMathProcessedSource(source.get(i), sourceType.get(i), fields, flowStringMap, flow, i,flowKey, lastKey);
+            String processedSource = getMathProcessedSource(source.get(i), sourceType.get(i), fields, flowStringMap, flow, i,flowKey, lastKey,aggregatedFlow);
             result.add(processedSource);
             if (i < source.size() - 1) {
                 result.add(basicMathOperations.get(flow.getFlow()));
@@ -384,28 +403,27 @@ public class PostgresCalculatedField {
         }
         String mathematicalExpression = String.join(" ", result);
         flowStringMap.put(flowKey, mathematicalExpression);
-        flowStringMap.put(flowKey+"@", mathematicalExpression);
         if(flow.getIsAggregation() && !flowKey.equals(lastKey)){
-            mathematicalExpression = processAggregation(flow, mathematicalExpression, "agg", null, fields, flowStringMap, flowKey, lastKey, true);
+            mathematicalExpression = processAggregation(flow, mathematicalExpression, "agg", null, fields, flowStringMap, flowKey, lastKey, true,aggregatedFlow);
         }
     }
 
     // to procees math single argument operations - absolute,ceiling,floor
     private static void processMathSingleArgumentOperations(Flow flow, Map<String, Field> fields, Map<String, String> flowStringMap,
-                                                         String flowKey,List<String> source, List<String> sourceType, String lastKey) throws BadRequestException {
-        String processedSource = getMathProcessedSource(source.get(0), sourceType.get(0), fields, flowStringMap, flow, 0,flowKey,lastKey);
+                                                         String flowKey,List<String> source, List<String> sourceType, String lastKey, List<String> aggregatedFlow) throws BadRequestException {
+        String processedSource = getMathProcessedSource(source.get(0), sourceType.get(0), fields, flowStringMap, flow, 0,flowKey,lastKey,aggregatedFlow);
         flowStringMap.put(flowKey, basicMathOperations.get(flow.getFlow()) + "(" + processedSource + ")");
     }
 
     // to procees math multiple argument operations - minimum and maximum
     private static void processMultipleArgumentOperations(Flow flow, Map<String, Field> fields, Map<String, String> flowStringMap,
-                                                         String flowKey,List<String> result, List<String> source, List<String> sourceType, String lastKey) throws BadRequestException {
+                                                         String flowKey,List<String> result, List<String> source, List<String> sourceType, String lastKey, List<String> aggregatedFlow) throws BadRequestException {
         if (source.size() < 2) {
         throw new BadRequestException("Insufficient parameters: at least two values are required for basic math operations.");
         }
 
         for (int i = 0; i < source.size(); i++) {
-            String processedSource = getMathProcessedSource(source.get(i), sourceType.get(i), fields, flowStringMap, flow, i,flowKey,lastKey);
+            String processedSource = getMathProcessedSource(source.get(i), sourceType.get(i), fields, flowStringMap, flow, i,flowKey,lastKey,aggregatedFlow);
             result.add(processedSource);
             if (i < source.size() - 1) {
                 result.add(",");
@@ -417,18 +435,18 @@ public class PostgresCalculatedField {
     // To process the power operation
     // 1st source - base value, 2nd source - exponent value
     private static void processPowerOperation(Flow flow, Map<String, Field> fields, Map<String, String> flowStringMap,
-                                             String flowKey,List<String> source, List<String> sourceType, String lastKey) throws BadRequestException {
+                                             String flowKey,List<String> source, List<String> sourceType, String lastKey, List<String> aggregatedFlow) throws BadRequestException {
         if (source.size() != 2) {
         throw new BadRequestException("Invalid parameters: Power operation requires exactly two parameters.");
         }
 
-        String processedSource = getMathProcessedSource(source.get(0), sourceType.get(0), fields, flowStringMap, flow, 0,flowKey,lastKey);
+        String processedSource = getMathProcessedSource(source.get(0), sourceType.get(0), fields, flowStringMap, flow, 0,flowKey,lastKey,aggregatedFlow);
         flowStringMap.put(flowKey, basicMathOperations.get(flow.getFlow()) + "(" + processedSource + "," + source.get(1) + ")");
     }
 
     // to get a list of source with and without aggregation
     private static String getMathProcessedSource(String source, String sourceType,
-                                             Map<String, Field> fields, Map<String, String> flowStringMap, Flow flow, int index,String flowKey,String lastKey) throws BadRequestException {
+                                             Map<String, Field> fields, Map<String, String> flowStringMap, Flow flow, int index,String flowKey,String lastKey,List<String> aggregatedFlow) throws BadRequestException {
         String processedSource = "";
         if ("field".equals(sourceType)) {
             Field field = fields.get(source);
@@ -437,15 +455,14 @@ public class PostgresCalculatedField {
             }
             processedSource = field.getTableId() + "." + field.getFieldName(); 
         } else if ("flow".equals(sourceType)) {
-            if(flow.getSourceType().contains("field") && !flowKey.equals(lastKey)){
-
-            }
-            String sourceKey = flow.getSourceType().contains("field") ? source + "@" : source;
+            
+            String sourceKey = (flow.getSourceType().contains("field") || flow.getSourceType().contains("flow")) && aggregatedFlow.contains(source)? source + "@" : source;
             String sourceFlowValue = Optional.ofNullable(flowStringMap.get(sourceKey))
                                     .orElse(flowStringMap.get(source));
             if(sourceFlowValue == null || sourceFlowValue.isEmpty()){
                 throw new BadRequestException("No such a flow with an id:" + source);
             }
+            System.out.println(source);
             processedSource = sourceFlowValue;
         } else {
             processedSource = source;
@@ -453,15 +470,18 @@ public class PostgresCalculatedField {
 
         if (flow.getIsAggregation()) {
             processedSource = flow.getAggregation().get(index) + "(" + processedSource + ")";
+            System.out.println("AggregatedFlow " + aggregatedFlow);
+            System.out.println("FlowKey + " + flowKey);
+            aggregatedFlow.add(flowKey);
         }
         return processedSource;
     }
 
     private static String processAggregation(Flow flow, String processedSource, String sourceType, 
-                                         String source, Map<String, Field> fields,Map<String,String> flowStringMap,String flowKey, String lastKey, Boolean isAggregatedWithBasicMath) throws BadRequestException {
+                                         String source, Map<String, Field> fields,Map<String,String> flowStringMap,String flowKey, String lastKey, Boolean isAggregatedWithBasicMath, List<String> aggregatedFlow) throws BadRequestException {
 
     if(!isAggregatedWithBasicMath){
-        processedSource = getMathProcessedSource(source, sourceType, fields, flowStringMap, flow, 0, flowKey, lastKey);
+        processedSource = getMathProcessedSource(source, sourceType, fields, flowStringMap, flow, 0, flowKey, lastKey,aggregatedFlow);
         flowStringMap.put(flowKey,processedSource);
     }
 
